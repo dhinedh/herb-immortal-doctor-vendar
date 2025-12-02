@@ -3,10 +3,6 @@ import {
   Home,
   Calendar,
   MessageSquare,
-  ShoppingBag,
-  Package,
-  TrendingUp,
-  Wallet,
   User,
   Settings,
   Bell,
@@ -19,6 +15,7 @@ import { useAuth } from '../../contexts/AuthContext';
 interface DashboardLayoutProps {
   children: React.ReactNode;
   currentPage?: string;
+  onPageChange?: (page: string) => void;
 }
 
 const menuItems = [
@@ -26,10 +23,6 @@ const menuItems = [
   { icon: Calendar, label: 'Bookings', path: 'bookings' },
   { icon: MessageSquare, label: 'Chats', path: 'chats' },
   { icon: Calendar, label: 'Calendar', path: 'calendar' },
-  { icon: ShoppingBag, label: 'Products', path: 'products' },
-  { icon: Package, label: 'Orders', path: 'orders' },
-  { icon: TrendingUp, label: 'Insights', path: 'insights' },
-  { icon: Wallet, label: 'Wallet', path: 'wallet' },
   { icon: User, label: 'Profile', path: 'profile' },
   { icon: Settings, label: 'Settings', path: 'settings' },
 ];
@@ -37,6 +30,7 @@ const menuItems = [
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
   currentPage = 'home',
+  onPageChange,
 }) => {
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -61,6 +55,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             {menuItems.map((item) => (
               <button
                 key={item.path}
+                onClick={() => {
+                  onPageChange?.(item.path);
+                  setSidebarOpen(false);
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   currentPage === item.path
                     ? 'bg-[#E7F8EF] text-[#2E7D32]'
@@ -98,13 +96,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <div className="flex-1 lg:flex-none" />
 
               <div className="flex items-center gap-4">
-                <button className="relative p-2 hover:bg-gray-100 rounded-lg">
+                <button
+                  onClick={() => onPageChange?.('notifications')}
+                  className="relative p-2 hover:bg-gray-100 rounded-lg"
+                >
                   <Bell className="w-5 h-5 text-gray-700" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-[#E53935] rounded-full" />
-                </button>
-
-                <button className="p-2 hover:bg-gray-100 rounded-lg">
-                  <Wallet className="w-5 h-5 text-gray-700" />
                 </button>
 
                 <div className="relative">
@@ -116,11 +113,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   </button>
 
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
-                      <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-700">
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <button
+                        onClick={() => {
+                          onPageChange?.('profile');
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-700"
+                      >
                         Profile
                       </button>
-                      <button className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-700">
+                      <button
+                        onClick={() => {
+                          onPageChange?.('settings');
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-700"
+                      >
                         Settings
                       </button>
                       <hr className="my-1" />
