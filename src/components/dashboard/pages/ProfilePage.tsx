@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, GraduationCap, Award, FileText, Edit2, Plus, Trash2 } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
+import { supabase } from '../../../lib/supabase';
+import { EditProfileModal } from '../modals/EditProfileModal';
+import { EditEducationModal } from '../modals/EditEducationModal';
+import { EditLicenseModal } from '../modals/EditLicenseModal';
+import { EditCertificateModal } from '../modals/EditCertificateModal';
 
 type TabType = 'overview' | 'education' | 'licenses' | 'certificates' | 'details';
 
@@ -45,94 +50,147 @@ interface Certificate {
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [profile] = useState<DoctorProfile>({
-    full_name: 'John Smith',
-    preferred_name: 'John',
-    email: user?.email || 'doctor@herbimmortal.com',
-    phone: '+1 (555) 987-6543',
-    about: 'Experienced holistic healer with 15+ years of practice in integrative medicine. Specializing in herbal remedies, Ayurveda, and natural healing approaches.',
-    work_best_with: 'I work best with patients who are committed to natural healing and willing to make lifestyle changes for long-term wellness.',
-  });
-  const [education] = useState<Education[]>([
-    {
-      id: 'edu-1',
-      degree: 'Bachelor of Ayurvedic Medicine and Surgery (BAMS)',
-      specialization: 'Ayurvedic Medicine',
-      institution: 'National Institute of Ayurveda',
-      country: 'India',
-      start_year: 2003,
-      end_year: 2008,
-    },
-    {
-      id: 'edu-2',
-      degree: 'Master of Science in Herbal Medicine',
-      specialization: 'Phytotherapy',
-      institution: 'Maryland University of Integrative Health',
-      country: 'United States',
-      start_year: 2009,
-      end_year: 2011,
-    },
-  ]);
-  const [licenses] = useState<License[]>([
-    {
-      id: 'lic-1',
-      license_type: 'Ayurvedic Practitioner License',
-      issuing_authority: 'Central Council of Indian Medicine',
-      license_number: 'CCIM-2008-12345',
-      issue_date: '2008-07-15',
-      expiry_date: '2028-07-15',
-    },
-    {
-      id: 'lic-2',
-      license_type: 'Herbal Medicine Practitioner',
-      issuing_authority: 'American Herbalists Guild',
-      license_number: 'AHG-2011-67890',
-      issue_date: '2011-09-01',
-    },
-  ]);
-  const [certificates] = useState<Certificate[]>([
-    {
-      id: 'cert-1',
-      title: 'Advanced Herbal Formulation',
-      issued_by: 'American Botanical Council',
-      year: 2015,
-    },
-    {
-      id: 'cert-2',
-      title: 'Clinical Ayurveda Certification',
-      issued_by: 'National Ayurvedic Medical Association',
-      year: 2013,
-    },
-    {
-      id: 'cert-3',
-      title: 'Integrative Medicine Fellowship',
-      issued_by: 'Academy of Integrative Health & Medicine',
-      year: 2017,
-    },
-  ]);
+  const [profile, setProfile] = useState<DoctorProfile | null>(null);
+  const [education, setEducation] = useState<Education[]>([]);
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editEducationOpen, setEditEducationOpen] = useState(false);
+  const [editLicenseOpen, setEditLicenseOpen] = useState(false);
+  const [editCertificateOpen, setEditCertificateOpen] = useState(false);
+  const [editingEducation, setEditingEducation] = useState<Education | undefined>();
+  const [editingLicense, setEditingLicense] = useState<License | undefined>();
+  const [editingCertificate, setEditingCertificate] = useState<Certificate | undefined>();
+
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user]);
+
+  const fetchProfileData = async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [profileRes, educationRes, licensesRes, certificatesRes] = await Promise.all([
+        supabase.from('doctors').select('*').eq('id', user.id).maybeSingle(),
+        supabase.from('doctor_education').select('*').eq('doctor_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('doctor_licenses').select('*').eq('doctor_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('doctor_certificates').select('*').eq('doctor_id', user.id).order('created_at', { ascending: false }),
+      ]);
+
+      if (profileRes.error) throw profileRes.error;
+      if (educationRes.error) throw educationRes.error;
+      if (licensesRes.error) throw licensesRes.error;
+      if (certificatesRes.error) throw certificatesRes.error;
+
+      if (profileRes.data) {
+        setProfile({
+          full_name: profileRes.data.full_name,
+          preferred_name: profileRes.data.preferred_name,
+          email: profileRes.data.email,
+          phone: profileRes.data.phone,
+          about: profileRes.data.about,
+          work_best_with: profileRes.data.work_best_with,
+          profile_photo_url: profileRes.data.profile_photo_url,
+        });
+      }
+
+      setEducation(educationRes.data || []);
+      setLicenses(licensesRes.data || []);
+      setCertificates(certificatesRes.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditProfile = () => {
-    alert('Edit profile feature will be implemented');
+    setEditProfileOpen(true);
   };
 
   const handleAddEducation = () => {
-    alert('Add education feature will be implemented');
+    setEditingEducation(undefined);
+    setEditEducationOpen(true);
   };
 
   const handleAddLicense = () => {
-    alert('Add license feature will be implemented');
+    setEditingLicense(undefined);
+    setEditLicenseOpen(true);
   };
 
   const handleAddCertificate = () => {
-    alert('Add certificate feature will be implemented');
+    setEditingCertificate(undefined);
+    setEditCertificateOpen(true);
   };
 
-  const handleEditItem = (type: string, id: string) => {
-    alert(`Edit ${type} feature will be implemented. ID: ${id}`);
+  const handleEditEducation = (edu: Education) => {
+    setEditingEducation(edu);
+    setEditEducationOpen(true);
   };
 
-  const handleDeleteItem = (type: string, id: string) => {
-    alert(`Delete ${type} feature will be implemented. ID: ${id}`);
+  const handleEditLicense = (license: License) => {
+    setEditingLicense(license);
+    setEditLicenseOpen(true);
+  };
+
+  const handleEditCertificate = (cert: Certificate) => {
+    setEditingCertificate(cert);
+    setEditCertificateOpen(true);
+  };
+
+  const handleDeleteEducation = async (id: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('doctor_education')
+        .delete()
+        .eq('id', id)
+        .eq('doctor_id', user.id);
+
+      if (error) throw error;
+      fetchProfileData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete education');
+    }
+  };
+
+  const handleDeleteLicense = async (id: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('doctor_licenses')
+        .delete()
+        .eq('id', id)
+        .eq('doctor_id', user.id);
+
+      if (error) throw error;
+      fetchProfileData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete license');
+    }
+  };
+
+  const handleDeleteCertificate = async (id: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('doctor_certificates')
+        .delete()
+        .eq('id', id)
+        .eq('doctor_id', user.id);
+
+      if (error) throw error;
+      fetchProfileData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete certificate');
+    }
   };
 
   const tabs = [
@@ -144,11 +202,30 @@ export const ProfilePage: React.FC = () => {
   ];
 
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-[#2E7D32] mb-2">My Profile</h1>
+          <p className="text-gray-600">View and manage your professional profile</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#2E7D32] mb-2">My Profile</h1>
         <p className="text-gray-600">View and manage your professional profile</p>
+        {error && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            {error}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -185,31 +262,35 @@ export const ProfilePage: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="flex items-start gap-6 mb-6">
-                <div className="w-24 h-24 rounded-full bg-[#6CCF93] flex items-center justify-center text-white font-semibold text-3xl">
-                  {profile?.full_name[0]}
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-[#1F2933] mb-1">
-                    Dr. {profile?.preferred_name || profile?.full_name}
-                  </h3>
-                  <p className="text-gray-600 mb-2">{profile?.email}</p>
-                  {profile?.phone && <p className="text-gray-600">{profile.phone}</p>}
-                </div>
-              </div>
+              {profile && (
+                <>
+                  <div className="flex items-start gap-6 mb-6">
+                    <div className="w-24 h-24 rounded-full bg-[#6CCF93] flex items-center justify-center text-white font-semibold text-3xl">
+                      {profile.full_name[0]}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-[#1F2933] mb-1">
+                        Dr. {profile.preferred_name || profile.full_name}
+                      </h3>
+                      <p className="text-gray-600 mb-2">{profile.email}</p>
+                      {profile.phone && <p className="text-gray-600">{profile.phone}</p>}
+                    </div>
+                  </div>
 
-              {profile?.about && (
-                <div className="mb-6">
-                  <h4 className="font-semibold text-[#1F2933] mb-2">About</h4>
-                  <p className="text-gray-700 leading-relaxed">{profile.about}</p>
-                </div>
-              )}
+                  {profile.about && (
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-[#1F2933] mb-2">About</h4>
+                      <p className="text-gray-700 leading-relaxed">{profile.about}</p>
+                    </div>
+                  )}
 
-              {profile?.work_best_with && (
-                <div>
-                  <h4 className="font-semibold text-[#1F2933] mb-2">I work best with</h4>
-                  <p className="text-gray-700 leading-relaxed">{profile.work_best_with}</p>
-                </div>
+                  {profile.work_best_with && (
+                    <div>
+                      <h4 className="font-semibold text-[#1F2933] mb-2">I work best with</h4>
+                      <p className="text-gray-700 leading-relaxed">{profile.work_best_with}</p>
+                    </div>
+                  )}
+                </>
               )}
             </Card>
           )}
@@ -245,10 +326,10 @@ export const ProfilePage: React.FC = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditItem('education', edu.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleEditEducation(edu)}>
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteItem('education', edu.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteEducation(edu.id)}>
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </Button>
                         </div>
@@ -294,10 +375,10 @@ export const ProfilePage: React.FC = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditItem('license', license.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleEditLicense(license)}>
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteItem('license', license.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteLicense(license.id)}>
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </Button>
                         </div>
@@ -331,10 +412,10 @@ export const ProfilePage: React.FC = () => {
                       <div className="flex items-start justify-between mb-2">
                         <Award className="w-8 h-8 text-[#6CCF93]" />
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditItem('certificate', cert.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleEditCertificate(cert)}>
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteItem('certificate', cert.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteCertificate(cert.id)}>
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </Button>
                         </div>
@@ -360,6 +441,36 @@ export const ProfilePage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {profile && (
+        <EditProfileModal
+          isOpen={editProfileOpen}
+          onClose={() => setEditProfileOpen(false)}
+          onSuccess={fetchProfileData}
+          initialData={profile}
+        />
+      )}
+
+      <EditEducationModal
+        isOpen={editEducationOpen}
+        onClose={() => setEditEducationOpen(false)}
+        onSuccess={fetchProfileData}
+        editingData={editingEducation}
+      />
+
+      <EditLicenseModal
+        isOpen={editLicenseOpen}
+        onClose={() => setEditLicenseOpen(false)}
+        onSuccess={fetchProfileData}
+        editingData={editingLicense}
+      />
+
+      <EditCertificateModal
+        isOpen={editCertificateOpen}
+        onClose={() => setEditCertificateOpen(false)}
+        onSuccess={fetchProfileData}
+        editingData={editingCertificate}
+      />
     </div>
   );
 };
