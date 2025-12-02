@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Search, Send, Paperclip, Image, MoreVertical } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { Input } from '../../ui/Input';
-import { supabase } from '../../../lib/supabase';
-import { useAuth } from '../../../contexts/AuthContext';
+import { sampleChats, sampleMessages } from '../../../lib/sampleData';
 
 interface Chat {
   id: string;
@@ -26,97 +24,41 @@ interface Message {
 }
 
 export const ChatsPage: React.FC = () => {
-  const { user } = useAuth();
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [chats, setChats] = useState<Chat[]>(sampleChats);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(sampleChats[0] || null);
+  const [messages, setMessages] = useState<Message[]>(sampleMessages[sampleChats[0]?.id as keyof typeof sampleMessages] || []);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadChats();
-    }
-  }, [user]);
+  const handleSelectChat = (chat: Chat) => {
+    setSelectedChat(chat);
+    setMessages(sampleMessages[chat.id as keyof typeof sampleMessages] || []);
 
-  useEffect(() => {
-    if (selectedChat) {
-      loadMessages(selectedChat.id);
-      markAsRead(selectedChat.id);
-    }
-  }, [selectedChat]);
-
-  const loadChats = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    const { data } = await supabase
-      .from('chats')
-      .select('*, patients(full_name, avatar_url)')
-      .eq('doctor_id', user.id)
-      .order('last_message_at', { ascending: false });
-
-    if (data) {
-      setChats(data as Chat[]);
-      if (data.length > 0 && !selectedChat) {
-        setSelectedChat(data[0] as Chat);
-      }
-    }
-    setLoading(false);
+    const updatedChats = chats.map(c =>
+      c.id === chat.id ? { ...c, unread_count_doctor: 0 } : c
+    );
+    setChats(updatedChats);
   };
 
-  const loadMessages = async (chatId: string) => {
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('chat_id', chatId)
-      .order('created_at', { ascending: true });
+  const sendMessage = () => {
+    if (!selectedChat || !newMessage.trim()) return;
 
-    if (data) {
-      setMessages(data);
-    }
-  };
-
-  const markAsRead = async (chatId: string) => {
-    await supabase
-      .from('chats')
-      .update({ unread_count_doctor: 0 })
-      .eq('id', chatId);
-
-    await supabase
-      .from('messages')
-      .update({ is_read: true })
-      .eq('chat_id', chatId)
-      .eq('sender_type', 'patient');
-
-    loadChats();
-  };
-
-  const sendMessage = async () => {
-    if (!selectedChat || !user || !newMessage.trim()) return;
-
-    const { error } = await supabase.from('messages').insert({
-      chat_id: selectedChat.id,
-      sender_type: 'doctor',
-      sender_id: user.id,
+    const newMsg: Message = {
+      id: `msg-${Date.now()}`,
       content: newMessage.trim(),
-    });
+      sender_type: 'doctor',
+      created_at: new Date().toISOString(),
+    };
 
-    if (!error) {
-      await supabase
-        .from('chats')
-        .update({
-          last_message: newMessage.trim(),
-          last_message_at: new Date().toISOString(),
-          unread_count_patient: selectedChat.unread_count_doctor + 1,
-        })
-        .eq('id', selectedChat.id);
+    setMessages([...messages, newMsg]);
+    setNewMessage('');
 
-      setNewMessage('');
-      loadMessages(selectedChat.id);
-      loadChats();
-    }
+    const updatedChats = chats.map(c =>
+      c.id === selectedChat.id
+        ? { ...c, last_message: newMessage.trim(), last_message_at: new Date().toISOString() }
+        : c
+    );
+    setChats(updatedChats);
   };
 
   const filteredChats = chats.filter(chat =>
@@ -161,15 +103,13 @@ export const ChatsPage: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="p-4 text-center text-gray-500">Loading chats...</div>
-            ) : filteredChats.length === 0 ? (
+            {filteredChats.length === 0 ? (
               <div className="p-4 text-center text-gray-500">No conversations yet</div>
             ) : (
               filteredChats.map((chat) => (
                 <div
                   key={chat.id}
-                  onClick={() => setSelectedChat(chat)}
+                  onClick={() => handleSelectChat(chat)}
                   className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
                     selectedChat?.id === chat.id ? 'bg-[#E7F8EF]' : ''
                   }`}

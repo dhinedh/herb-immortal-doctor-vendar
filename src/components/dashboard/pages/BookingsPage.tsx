@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, Video, MessageSquare, Phone, User } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
-import { supabase } from '../../../lib/supabase';
-import { useAuth } from '../../../contexts/AuthContext';
 import { BOOKING_STATUS, CONSULTATION_TYPES } from '../../../lib/constants';
+import { sampleBookings } from '../../../lib/sampleData';
+import { BookingDetailsPage } from './BookingDetailsPage';
 
 type FilterTab = 'all' | 'upcoming' | 'past';
 
@@ -28,42 +28,30 @@ interface Booking {
 }
 
 export const BookingsPage: React.FC = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [bookings] = useState<Booking[]>(sampleBookings);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadBookings();
-    }
-  }, [user, activeTab]);
-
-  const loadBookings = async () => {
-    if (!user) return;
-
-    setLoading(true);
-    let query = supabase
-      .from('bookings')
-      .select('*, patients(full_name, avatar_url, date_of_birth, gender)')
-      .eq('doctor_id', user.id);
-
+  const filteredBookings = bookings.filter((booking) => {
     const today = new Date().toISOString().split('T')[0];
+    const bookingDate = booking.date;
 
     if (activeTab === 'upcoming') {
-      query = query.gte('date', today).in('status', ['pending', 'confirmed']);
+      return bookingDate >= today && ['pending', 'confirmed'].includes(booking.status);
     } else if (activeTab === 'past') {
-      query = query.or(`date.lt.${today},status.in.(completed,cancelled,no_show)`);
+      return bookingDate < today || ['completed', 'cancelled', 'no_show'].includes(booking.status);
     }
+    return true;
+  });
 
-    const { data } = await query.order('date', { ascending: activeTab === 'past' ? false : true }).order('start_time', { ascending: true });
-
-    if (data) {
-      setBookings(data as Booking[]);
-    }
-
-    setLoading(false);
-  };
+  if (selectedBookingId) {
+    return (
+      <BookingDetailsPage
+        bookingId={selectedBookingId}
+        onBack={() => setSelectedBookingId(null)}
+      />
+    );
+  }
 
   const getConsultationIcon = (type: string) => {
     switch (type) {
@@ -111,6 +99,10 @@ export const BookingsPage: React.FC = () => {
     }
   };
 
+  const handleJoinCall = (bookingId: string) => {
+    alert('Video call feature will be implemented. Booking ID: ' + bookingId);
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6">
@@ -143,11 +135,7 @@ export const BookingsPage: React.FC = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-pulse text-[#6CCF93] text-lg">Loading bookings...</div>
-        </div>
-      ) : bookings.length === 0 ? (
+      {filteredBookings.length === 0 ? (
         <Card className="text-center py-12">
           <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">No bookings found</h3>
@@ -161,7 +149,7 @@ export const BookingsPage: React.FC = () => {
         </Card>
       ) : (
         <div className="space-y-4">
-          {bookings.map((booking) => (
+          {filteredBookings.map((booking) => (
             <Card key={booking.id} className="hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1">
@@ -206,9 +194,9 @@ export const BookingsPage: React.FC = () => {
                     {BOOKING_STATUS[booking.status]?.label || booking.status}
                   </Badge>
                   {booking.status === 'confirmed' && booking.consultation_type === 'video' && (
-                    <Button size="sm">Join Call</Button>
+                    <Button size="sm" onClick={() => handleJoinCall(booking.id)}>Join Call</Button>
                   )}
-                  <Button variant="outline" size="sm">View Details</Button>
+                  <Button variant="outline" size="sm" onClick={() => setSelectedBookingId(booking.id)}>View Details</Button>
                 </div>
               </div>
             </Card>

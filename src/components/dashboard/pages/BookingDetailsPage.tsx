@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, MapPin, Video, MessageSquare, Phone, FileText, Paperclip, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, MapPin, Video, MessageSquare, Phone, FileText, Paperclip, ArrowLeft, User } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
-import { supabase } from '../../../lib/supabase';
 import { BOOKING_STATUS, CONSULTATION_TYPES } from '../../../lib/constants';
+import { sampleBookings } from '../../../lib/sampleData';
 
 interface BookingDetailsPageProps {
   bookingId: string;
@@ -48,43 +48,25 @@ export const BookingDetailsPage: React.FC<BookingDetailsPageProps> = ({ bookingI
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadBookingDetails();
+    const foundBooking = sampleBookings.find(b => b.id === bookingId);
+    if (foundBooking) {
+      setBooking({
+        ...foundBooking,
+        patients: {
+          ...foundBooking.patients,
+          email: foundBooking.patients.full_name.toLowerCase().replace(' ', '.') + '@email.com',
+          phone: '+1 (555) 123-4567',
+        },
+      } as BookingDetails);
+      setNotes(foundBooking.notes || '');
+    }
+    setAttachments([]);
+    setLoading(false);
   }, [bookingId]);
 
-  const loadBookingDetails = async () => {
-    setLoading(true);
-
-    const { data: bookingData } = await supabase
-      .from('bookings')
-      .select('*, patients(full_name, email, phone, date_of_birth, gender, avatar_url)')
-      .eq('id', bookingId)
-      .maybeSingle();
-
-    if (bookingData) {
-      setBooking(bookingData as BookingDetails);
-      setNotes(bookingData.notes || '');
-    }
-
-    const { data: attachmentsData } = await supabase
-      .from('booking_attachments')
-      .select('*')
-      .eq('booking_id', bookingId)
-      .order('uploaded_at', { ascending: false });
-
-    if (attachmentsData) {
-      setAttachments(attachmentsData);
-    }
-
-    setLoading(false);
-  };
-
-  const handleSaveNotes = async () => {
+  const handleSaveNotes = () => {
     if (!booking) return;
-
-    await supabase
-      .from('bookings')
-      .update({ notes })
-      .eq('id', bookingId);
+    alert('Notes saved successfully!');
   };
 
   const getConsultationIcon = (type: string) => {

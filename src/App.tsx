@@ -12,9 +12,6 @@ import { HomePage } from './components/dashboard/HomePage';
 import { BookingsPage } from './components/dashboard/pages/BookingsPage';
 import { ChatsPage } from './components/dashboard/pages/ChatsPage';
 import { CalendarPage } from './components/dashboard/pages/CalendarPage';
-import { ProductsPage } from './components/dashboard/pages/ProductsPage';
-import { OrdersPage } from './components/dashboard/pages/OrdersPage';
-import { WalletPage } from './components/dashboard/pages/WalletPage';
 import { ProfilePage } from './components/dashboard/pages/ProfilePage';
 import { SettingsPage } from './components/dashboard/pages/SettingsPage';
 import { NotificationsPage } from './components/dashboard/pages/NotificationsPage';
@@ -135,12 +132,6 @@ function AppContent() {
         return <ChatsPage />;
       case 'calendar':
         return <CalendarPage />;
-      case 'products':
-        return <ProductsPage />;
-      case 'orders':
-        return <OrdersPage />;
-      case 'wallet':
-        return <WalletPage />;
       case 'profile':
         return <ProfilePage />;
       case 'settings':

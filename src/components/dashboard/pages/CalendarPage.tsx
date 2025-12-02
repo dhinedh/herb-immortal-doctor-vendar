@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
-import { supabase } from '../../../lib/supabase';
-import { useAuth } from '../../../contexts/AuthContext';
 import { BOOKING_STATUS } from '../../../lib/constants';
+import { sampleBookings } from '../../../lib/sampleData';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -22,41 +21,9 @@ interface Booking {
 }
 
 export const CalendarPage: React.FC = () => {
-  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      loadBookings();
-    }
-  }, [user, currentDate, viewMode]);
-
-  const loadBookings = async () => {
-    if (!user) return;
-
-    setLoading(true);
-
-    const startDate = getStartDate();
-    const endDate = getEndDate();
-
-    const { data } = await supabase
-      .from('bookings')
-      .select('*, patients(full_name)')
-      .eq('doctor_id', user.id)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: true })
-      .order('start_time', { ascending: true });
-
-    if (data) {
-      setBookings(data as Booking[]);
-    }
-
-    setLoading(false);
-  };
+  const [bookings] = useState<Booking[]>(sampleBookings);
 
   const getStartDate = () => {
     const date = new Date(currentDate);
@@ -324,17 +291,11 @@ export const CalendarPage: React.FC = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-pulse text-[#6CCF93] text-lg">Loading calendar...</div>
-        </div>
-      ) : (
-        <>
-          {viewMode === 'day' && renderDayView()}
-          {viewMode === 'week' && renderWeekView()}
-          {viewMode === 'month' && renderMonthView()}
-        </>
-      )}
+      <>
+        {viewMode === 'day' && renderDayView()}
+        {viewMode === 'week' && renderWeekView()}
+        {viewMode === 'month' && renderMonthView()}
+      </>
     </div>
   );
 };

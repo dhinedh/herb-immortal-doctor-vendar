@@ -3,10 +3,6 @@ import {
   Home,
   Calendar,
   MessageSquare,
-  ShoppingBag,
-  Package,
-  TrendingUp,
-  Wallet,
   User,
   Settings,
   Bell,
@@ -27,10 +23,6 @@ const menuItems = [
   { icon: Calendar, label: 'Bookings', path: 'bookings' },
   { icon: MessageSquare, label: 'Chats', path: 'chats' },
   { icon: Calendar, label: 'Calendar', path: 'calendar' },
-  { icon: ShoppingBag, label: 'Products', path: 'products' },
-  { icon: Package, label: 'Orders', path: 'orders' },
-  { icon: TrendingUp, label: 'Insights', path: 'insights' },
-  { icon: Wallet, label: 'Wallet', path: 'wallet' },
   { icon: User, label: 'Profile', path: 'profile' },
   { icon: Settings, label: 'Settings', path: 'settings' },
 ];
@@ -110,13 +102,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 >
                   <Bell className="w-5 h-5 text-gray-700" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-[#E53935] rounded-full" />
-                </button>
-
-                <button
-                  onClick={() => onPageChange?.('wallet')}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
-                >
-                  <Wallet className="w-5 h-5 text-gray-700" />
                 </button>
 
                 <div className="relative">

@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { User, GraduationCap, Award, FileText, Edit2, Plus, Trash2 } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { Input } from '../../ui/Input';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
 type TabType = 'overview' | 'education' | 'licenses' | 'certificates' | 'details';
@@ -47,76 +45,94 @@ interface Certificate {
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [profile, setProfile] = useState<DoctorProfile | null>(null);
-  const [education, setEducation] = useState<Education[]>([]);
-  const [licenses, setLicenses] = useState<License[]>([]);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [profile] = useState<DoctorProfile>({
+    full_name: 'John Smith',
+    preferred_name: 'John',
+    email: user?.email || 'doctor@herbimmortal.com',
+    phone: '+1 (555) 987-6543',
+    about: 'Experienced holistic healer with 15+ years of practice in integrative medicine. Specializing in herbal remedies, Ayurveda, and natural healing approaches.',
+    work_best_with: 'I work best with patients who are committed to natural healing and willing to make lifestyle changes for long-term wellness.',
+  });
+  const [education] = useState<Education[]>([
+    {
+      id: 'edu-1',
+      degree: 'Bachelor of Ayurvedic Medicine and Surgery (BAMS)',
+      specialization: 'Ayurvedic Medicine',
+      institution: 'National Institute of Ayurveda',
+      country: 'India',
+      start_year: 2003,
+      end_year: 2008,
+    },
+    {
+      id: 'edu-2',
+      degree: 'Master of Science in Herbal Medicine',
+      specialization: 'Phytotherapy',
+      institution: 'Maryland University of Integrative Health',
+      country: 'United States',
+      start_year: 2009,
+      end_year: 2011,
+    },
+  ]);
+  const [licenses] = useState<License[]>([
+    {
+      id: 'lic-1',
+      license_type: 'Ayurvedic Practitioner License',
+      issuing_authority: 'Central Council of Indian Medicine',
+      license_number: 'CCIM-2008-12345',
+      issue_date: '2008-07-15',
+      expiry_date: '2028-07-15',
+    },
+    {
+      id: 'lic-2',
+      license_type: 'Herbal Medicine Practitioner',
+      issuing_authority: 'American Herbalists Guild',
+      license_number: 'AHG-2011-67890',
+      issue_date: '2011-09-01',
+    },
+  ]);
+  const [certificates] = useState<Certificate[]>([
+    {
+      id: 'cert-1',
+      title: 'Advanced Herbal Formulation',
+      issued_by: 'American Botanical Council',
+      year: 2015,
+    },
+    {
+      id: 'cert-2',
+      title: 'Clinical Ayurveda Certification',
+      issued_by: 'National Ayurvedic Medical Association',
+      year: 2013,
+    },
+    {
+      id: 'cert-3',
+      title: 'Integrative Medicine Fellowship',
+      issued_by: 'Academy of Integrative Health & Medicine',
+      year: 2017,
+    },
+  ]);
 
-  useEffect(() => {
-    if (user) {
-      loadProfile();
-      loadEducation();
-      loadLicenses();
-      loadCertificates();
-    }
-  }, [user]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('doctors')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (data) {
-      setProfile(data);
-    }
-    setLoading(false);
+  const handleEditProfile = () => {
+    alert('Edit profile feature will be implemented');
   };
 
-  const loadEducation = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('doctor_education')
-      .select('*')
-      .eq('doctor_id', user.id)
-      .order('end_year', { ascending: false });
-
-    if (data) {
-      setEducation(data);
-    }
+  const handleAddEducation = () => {
+    alert('Add education feature will be implemented');
   };
 
-  const loadLicenses = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('doctor_licenses')
-      .select('*')
-      .eq('doctor_id', user.id)
-      .order('issue_date', { ascending: false });
-
-    if (data) {
-      setLicenses(data);
-    }
+  const handleAddLicense = () => {
+    alert('Add license feature will be implemented');
   };
 
-  const loadCertificates = async () => {
-    if (!user) return;
+  const handleAddCertificate = () => {
+    alert('Add certificate feature will be implemented');
+  };
 
-    const { data } = await supabase
-      .from('doctor_certificates')
-      .select('*')
-      .eq('doctor_id', user.id)
-      .order('year', { ascending: false });
+  const handleEditItem = (type: string, id: string) => {
+    alert(`Edit ${type} feature will be implemented. ID: ${id}`);
+  };
 
-    if (data) {
-      setCertificates(data);
-    }
+  const handleDeleteItem = (type: string, id: string) => {
+    alert(`Delete ${type} feature will be implemented. ID: ${id}`);
   };
 
   const tabs = [
@@ -127,13 +143,6 @@ export const ProfilePage: React.FC = () => {
     { key: 'details' as TabType, label: 'Other Details', icon: Edit2 },
   ];
 
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-pulse text-[#6CCF93] text-lg">Loading profile...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -170,7 +179,7 @@ export const ProfilePage: React.FC = () => {
             <Card>
               <div className="flex items-start justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-[#2E7D32]">Profile Overview</h2>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleEditProfile}>
                   <Edit2 className="w-4 h-4 mr-2" />
                   Edit Profile
                 </Button>
@@ -209,7 +218,7 @@ export const ProfilePage: React.FC = () => {
             <Card>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-[#2E7D32]">Education</h2>
-                <Button>
+                <Button onClick={handleAddEducation}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Education
                 </Button>
@@ -236,10 +245,10 @@ export const ProfilePage: React.FC = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditItem('education', edu.id)}>
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteItem('education', edu.id)}>
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </Button>
                         </div>
@@ -255,7 +264,7 @@ export const ProfilePage: React.FC = () => {
             <Card>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-[#2E7D32]">Professional Licenses</h2>
-                <Button>
+                <Button onClick={handleAddLicense}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add License
                 </Button>
@@ -285,10 +294,10 @@ export const ProfilePage: React.FC = () => {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditItem('license', license.id)}>
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteItem('license', license.id)}>
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </Button>
                         </div>
@@ -304,7 +313,7 @@ export const ProfilePage: React.FC = () => {
             <Card>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-[#2E7D32]">Certificates</h2>
-                <Button>
+                <Button onClick={handleAddCertificate}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Certificate
                 </Button>
@@ -322,10 +331,10 @@ export const ProfilePage: React.FC = () => {
                       <div className="flex items-start justify-between mb-2">
                         <Award className="w-8 h-8 text-[#6CCF93]" />
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditItem('certificate', cert.id)}>
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteItem('certificate', cert.id)}>
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </Button>
                         </div>
