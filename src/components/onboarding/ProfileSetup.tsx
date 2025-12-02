@@ -426,13 +426,15 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
             <h2 className="text-2xl font-bold text-[#2E7D32] mb-6">
               Education & Certificates
             </h2>
-            <div className="text-center py-12">
-              <p className="text-gray-600 mb-4">
-                You can add your education and certificates later from your profile settings.
+            <div className="bg-[#E7F8EF] rounded-lg p-6 mb-6">
+              <p className="text-sm text-gray-700">
+                Add your educational qualifications, professional licenses, and certifications to build trust with patients.
               </p>
-              <Button variant="outline" onClick={handleNext}>
-                Skip for now
-              </Button>
+            </div>
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">
+                You can add your education, licenses, and certificates later from your profile settings.
+              </p>
             </div>
           </div>
         );
@@ -441,9 +443,19 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
         return (
           <div className="max-w-2xl">
             <h2 className="text-2xl font-bold text-[#2E7D32] mb-6">Add Media</h2>
-            <div className="text-center py-12">
+            <div className="bg-[#E7F8EF] rounded-lg p-6 mb-6">
+              <p className="text-sm text-gray-700 mb-3">
+                High-quality images and videos help patients trust you and feel more comfortable booking consultations.
+              </p>
+              <ul className="text-sm text-gray-600 space-y-2">
+                <li>Profile Photo: Clear, professional headshot</li>
+                <li>Clinic Photos: Show your practice space</li>
+                <li>Intro Video: Brief introduction to you and your approach</li>
+              </ul>
+            </div>
+            <div className="text-center py-8">
               <p className="text-gray-600 mb-4">
-                You can add profile photos and videos later from your profile settings.
+                You can add profile photos, clinic images, and introduction videos later from your profile settings.
               </p>
             </div>
           </div>

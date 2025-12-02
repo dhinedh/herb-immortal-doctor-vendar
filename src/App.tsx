@@ -9,6 +9,15 @@ import { PrivacyPolicy } from './components/onboarding/PrivacyPolicy';
 import { ProfileSetup } from './components/onboarding/ProfileSetup';
 import { DashboardLayout } from './components/dashboard/DashboardLayout';
 import { HomePage } from './components/dashboard/HomePage';
+import { BookingsPage } from './components/dashboard/pages/BookingsPage';
+import { ChatsPage } from './components/dashboard/pages/ChatsPage';
+import { CalendarPage } from './components/dashboard/pages/CalendarPage';
+import { ProductsPage } from './components/dashboard/pages/ProductsPage';
+import { OrdersPage } from './components/dashboard/pages/OrdersPage';
+import { WalletPage } from './components/dashboard/pages/WalletPage';
+import { ProfilePage } from './components/dashboard/pages/ProfilePage';
+import { SettingsPage } from './components/dashboard/pages/SettingsPage';
+import { NotificationsPage } from './components/dashboard/pages/NotificationsPage';
 import { supabase } from './lib/supabase';
 
 type OnboardingStep =
@@ -27,6 +36,7 @@ function AppContent() {
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [currentPage, setCurrentPage] = useState('home');
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -115,9 +125,36 @@ function AppContent() {
     );
   }
 
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return <HomePage />;
+      case 'bookings':
+        return <BookingsPage />;
+      case 'chats':
+        return <ChatsPage />;
+      case 'calendar':
+        return <CalendarPage />;
+      case 'products':
+        return <ProductsPage />;
+      case 'orders':
+        return <OrdersPage />;
+      case 'wallet':
+        return <WalletPage />;
+      case 'profile':
+        return <ProfilePage />;
+      case 'settings':
+        return <SettingsPage />;
+      case 'notifications':
+        return <NotificationsPage />;
+      default:
+        return <HomePage />;
+    }
+  };
+
   return (
-    <DashboardLayout currentPage="home">
-      <HomePage />
+    <DashboardLayout currentPage={currentPage} onPageChange={setCurrentPage}>
+      {renderPage()}
     </DashboardLayout>
   );
 }
