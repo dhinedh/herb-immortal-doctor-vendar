@@ -3,8 +3,8 @@ import { Package, Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { sampleProducts } from '../../../lib/sampleData';
 
 interface Product {
   id: string;
@@ -25,35 +25,41 @@ export const ProductsPage: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
+  // Local state to simulate updates
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    // Initialize local products from sample data but ensure type compatibility
+    setLocalProducts(sampleProducts as unknown as Product[]);
+  }, []);
+
   useEffect(() => {
     if (user) {
       loadProducts();
     }
-  }, [user]);
+  }, [user, localProducts]);
 
   const loadProducts = async () => {
     if (!user) return;
 
     setLoading(true);
-    const { data } = await supabase
-      .from('products')
-      .select('*')
-      .eq('doctor_id', user.id)
-      .order('created_at', { ascending: false });
 
-    if (data) {
-      setProducts(data);
-    }
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    setProducts(localProducts);
     setLoading(false);
   };
 
   const toggleProductStatus = async (id: string, currentStatus: boolean) => {
-    await supabase
-      .from('products')
-      .update({ is_active: !currentStatus })
-      .eq('id', id);
+    // Simulate API call
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 600));
 
-    loadProducts();
+    const updated = localProducts.map(p =>
+      p.id === id ? { ...p, is_active: !currentStatus } : p
+    );
+    setLocalProducts(updated);
   };
 
   const filteredProducts = products.filter(product => {

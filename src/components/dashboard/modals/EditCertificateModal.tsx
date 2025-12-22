@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface CertificateData {
@@ -62,30 +61,8 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
     setError(null);
 
     try {
-      const data = {
-        title,
-        issued_by: issuedBy,
-        year,
-      };
-
-      if (editingData?.id) {
-        const { error: updateError } = await supabase
-          .from('doctor_certificates')
-          .update(data)
-          .eq('id', editingData.id)
-          .eq('doctor_id', user.id);
-
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from('doctor_certificates')
-          .insert({
-            ...data,
-            doctor_id: user.id,
-          });
-
-        if (insertError) throw insertError;
-      }
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       onSuccess();
       onClose();

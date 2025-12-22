@@ -3,9 +3,9 @@ import { Package, Calendar, User, MapPin, Truck } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { ORDER_STATUS } from '../../../lib/constants';
+import { sampleOrders } from '../../../lib/sampleData';
 
 type FilterTab = 'all' | 'pending' | 'confirmed' | 'shipped' | 'delivered';
 
@@ -33,40 +33,55 @@ export const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // We need local state for orders to simulate updates in this session
+  const [localOrders, setLocalOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    // Initialize local orders from sample data
+    // In a real app, this would happen once or on refresh
+    setLocalOrders(sampleOrders as unknown as Order[]);
+  }, []);
+
   useEffect(() => {
     if (user) {
       loadOrders();
     }
-  }, [user, activeTab]);
+  }, [user, activeTab, localOrders]); // Re-run when tab changes or localOrders updates
 
   const loadOrders = async () => {
     if (!user) return;
 
     setLoading(true);
-    let query = supabase
-      .from('orders')
-      .select('*, patients(full_name, email, phone), products(name, price)')
-      .eq('doctor_id', user.id);
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    let filtered = [...localOrders];
 
     if (activeTab !== 'all') {
-      query = query.eq('status', activeTab);
+      filtered = filtered.filter(o => o.status === activeTab);
     }
 
-    const { data } = await query.order('order_date', { ascending: false });
+    // Sort by date desc
+    filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
-    if (data) {
-      setOrders(data as Order[]);
-    }
+    setOrders(filtered);
     setLoading(false);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    await supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', orderId);
+    // Simulate API call
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-    loadOrders();
+    const updated = localOrders.map(o =>
+      o.id === orderId
+        ? { ...o, status: newStatus as keyof typeof ORDER_STATUS }
+        : o
+    );
+    setLocalOrders(updated);
+    // loadOrders will be triggered by useEffect dependency on localOrders but we might want to manually modify 'orders' state to avoid flicker or wait
+    // Actually the useEffect dependency is fine.
   };
 
   const getStatusVariant = (status: keyof typeof ORDER_STATUS) => {
@@ -105,11 +120,10 @@ export const OrdersPage: React.FC = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-6 py-3 font-medium transition-colors relative ${
-                activeTab === tab.key
+              className={`px-6 py-3 font-medium transition-colors relative ${activeTab === tab.key
                   ? 'text-[#2E7D32]'
                   : 'text-gray-600 hover:text-[#2E7D32]'
-              }`}
+                }`}
             >
               {tab.label}
               {activeTab === tab.key && (

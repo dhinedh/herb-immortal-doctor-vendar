@@ -210,7 +210,7 @@ export const BookingDetailsPage: React.FC<BookingDetailsPageProps> = ({ bookingI
           </Card>
 
           <Card>
-            <h2 className="text-xl font-semibold text-[#2E7D32] mb-4">Doctor's Notes</h2>
+            <h2 className="text-xl font-semibold text-[#2E7D32] mb-4">Healer's Notes</h2>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

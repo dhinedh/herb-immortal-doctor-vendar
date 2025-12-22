@@ -3,7 +3,6 @@ import { CheckCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   PRONOUNS_OPTIONS,
@@ -74,53 +73,11 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
   const saveProfile = async () => {
     if (!user) return;
 
-    await supabase
-      .from('doctors')
-      .update({
-        preferred_name: formData.preferredName,
-        pronouns: formData.pronouns,
-        date_of_birth: formData.dateOfBirth,
-        gender: formData.gender,
-        about: formData.about,
-        work_best_with: formData.workBestWith,
-        onboarding_completed: true,
-        onboarding_step: steps.length,
-      })
-      .eq('id', user.id);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (formData.addressLine1) {
-      await supabase.from('doctor_locations').insert({
-        doctor_id: user.id,
-        address_line1: formData.addressLine1,
-        address_line2: formData.addressLine2,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        postal_code: formData.postalCode,
-        is_primary: true,
-      });
-    }
-
-    await supabase.from('doctor_professional_details').upsert({
-      doctor_id: user.id,
-      service_locations: formData.serviceLocations,
-      services_provided_to: formData.servicesProvidedTo,
-      treatment_platforms: formData.treatmentPlatforms,
-      languages: formData.languages,
-      total_experience_years: formData.totalExperienceYears,
-      specializations: formData.specializations,
-    });
-
-    for (const avail of formData.availability) {
-      if (avail.isAvailable) {
-        await supabase.from('doctor_availability').upsert({
-          doctor_id: user.id,
-          day_of_week: avail.dayOfWeek,
-          is_available: avail.isAvailable,
-          time_slots: avail.timeSlots,
-        });
-      }
-    }
+    // Mock save success
+    console.log('Profile saved:', formData);
 
     onComplete();
   };
@@ -474,19 +431,17 @@ export const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
             {steps.map((step, index) => (
               <div key={step} className="flex items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                    index <= currentStep
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${index <= currentStep
                       ? 'bg-[#6CCF93] text-white'
                       : 'bg-gray-200 text-gray-500'
-                  }`}
+                    }`}
                 >
                   {index + 1}
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-12 h-1 mx-1 ${
-                      index < currentStep ? 'bg-[#6CCF93]' : 'bg-gray-200'
-                    }`}
+                    className={`w-12 h-1 mx-1 ${index < currentStep ? 'bg-[#6CCF93]' : 'bg-gray-200'
+                      }`}
                   />
                 )}
               </div>

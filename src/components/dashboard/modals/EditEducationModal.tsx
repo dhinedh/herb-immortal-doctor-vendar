@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface EducationData {
@@ -74,33 +73,8 @@ export const EditEducationModal: React.FC<EditEducationModalProps> = ({
     setError(null);
 
     try {
-      const data = {
-        degree,
-        specialization: specialization || null,
-        institution,
-        country,
-        start_year: startYear,
-        end_year: endYear || null,
-      };
-
-      if (editingData?.id) {
-        const { error: updateError } = await supabase
-          .from('doctor_education')
-          .update(data)
-          .eq('id', editingData.id)
-          .eq('doctor_id', user.id);
-
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from('doctor_education')
-          .insert({
-            ...data,
-            doctor_id: user.id,
-          });
-
-        if (insertError) throw insertError;
-      }
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       onSuccess();
       onClose();
@@ -108,7 +82,7 @@ export const EditEducationModal: React.FC<EditEducationModalProps> = ({
       setError(err instanceof Error ? err.message : 'Failed to save education');
     } finally {
       setLoading(false);
-    }
+    } 
   };
 
   return (

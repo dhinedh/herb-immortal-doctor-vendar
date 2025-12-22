@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
+import logo from '../../assets/logo.png';
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   currentPage?: string;
@@ -45,10 +47,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           } fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform lg:translate-x-0 lg:static`}
         >
           <div className="flex items-center gap-2 p-6 border-b border-gray-200">
-            <div className="bg-[#6CCF93] p-2 rounded-lg">
-              <Leaf className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-[#2E7D32]">Herb Immortal</span>
+            <img src={logo} alt="myherbalshop" className="w-8 h-8 object-contain" />
+            <span className="text-xl font-bold text-[#2E7D32]">myherbalshop</span>
           </div>
 
           <nav className="p-4 space-y-1">

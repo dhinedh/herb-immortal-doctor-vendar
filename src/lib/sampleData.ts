@@ -6,7 +6,7 @@ export const samplePatients = [
     phone: '+1 (555) 123-4567',
     date_of_birth: '1985-03-15',
     gender: 'Female',
-    avatar_url: null,
+    avatar_url: undefined,
   },
   {
     id: 'patient-2',
@@ -15,7 +15,7 @@ export const samplePatients = [
     phone: '+1 (555) 234-5678',
     date_of_birth: '1990-07-22',
     gender: 'Male',
-    avatar_url: null,
+    avatar_url: undefined,
   },
   {
     id: 'patient-3',
@@ -24,7 +24,7 @@ export const samplePatients = [
     phone: '+1 (555) 345-6789',
     date_of_birth: '1988-11-30',
     gender: 'Female',
-    avatar_url: null,
+    avatar_url: undefined,
   },
   {
     id: 'patient-4',
@@ -33,7 +33,7 @@ export const samplePatients = [
     phone: '+1 (555) 456-7890',
     date_of_birth: '1975-09-08',
     gender: 'Male',
-    avatar_url: null,
+    avatar_url: undefined,
   },
   {
     id: 'patient-5',
@@ -42,7 +42,7 @@ export const samplePatients = [
     phone: '+1 (555) 567-8901',
     date_of_birth: '1992-05-17',
     gender: 'Female',
-    avatar_url: null,
+    avatar_url: undefined,
   },
 ];
 
@@ -123,9 +123,9 @@ export const sampleChats = [
   {
     id: 'chat-1',
     patient_id: 'patient-1',
-    last_message: 'Thank you for the consultation, Doctor!',
+    last_message: 'Thank you for the consultation, Healer!',
     last_message_at: new Date(Date.now() - 3600000).toISOString(),
-    unread_count_doctor: 1,
+    unread_count_healer: 1,
     patients: samplePatients[0],
   },
   {
@@ -133,7 +133,7 @@ export const sampleChats = [
     patient_id: 'patient-2',
     last_message: 'Can I reschedule my appointment?',
     last_message_at: new Date(Date.now() - 7200000).toISOString(),
-    unread_count_doctor: 2,
+    unread_count_healer: 2,
     patients: samplePatients[1],
   },
   {
@@ -141,7 +141,7 @@ export const sampleChats = [
     patient_id: 'patient-3',
     last_message: 'The herbal tea is working great!',
     last_message_at: new Date(Date.now() - 86400000).toISOString(),
-    unread_count_doctor: 0,
+    unread_count_healer: 0,
     patients: samplePatients[2],
   },
 ];
@@ -153,15 +153,15 @@ export const sampleMessages = {
       chat_id: 'chat-1',
       sender_type: 'patient',
       sender_id: 'patient-1',
-      content: 'Hello Doctor, I wanted to ask about the herbal supplements you recommended.',
+      content: 'Hello Healer, I wanted to ask about the herbal supplements you recommended.',
       created_at: new Date(Date.now() - 7200000).toISOString(),
       is_read: true,
     },
     {
       id: 'msg-2',
       chat_id: 'chat-1',
-      sender_type: 'doctor',
-      sender_id: 'doctor-1',
+      sender_type: 'healer',
+      sender_id: 'healer-1',
       content: 'Hello Sarah! Of course, what would you like to know?',
       created_at: new Date(Date.now() - 7000000).toISOString(),
       is_read: true,
@@ -178,8 +178,8 @@ export const sampleMessages = {
     {
       id: 'msg-4',
       chat_id: 'chat-1',
-      sender_type: 'doctor',
-      sender_id: 'doctor-1',
+      sender_type: 'healer',
+      sender_id: 'healer-1',
       content: 'I recommend taking them after meals for better absorption. Make sure to take them with plenty of water.',
       created_at: new Date(Date.now() - 6600000).toISOString(),
       is_read: true,
@@ -226,3 +226,98 @@ export const sampleMessages = {
     },
   ],
 };
+
+export const sampleDoctor = {
+  id: 'doctor-123',
+  full_name: 'Dr. John Doe',
+  preferred_name: 'John',
+  email: 'john.doe@example.com',
+  phone: '+1 (555) 000-0000',
+  specialization: 'Ayurveda',
+  experience_years: 15,
+  consultation_fee: 500,
+  about: 'Experienced Ayurvedic practitioner with a focus on holistic healing and natural remedies.',
+  avatar_url: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop',
+  status: 'approved',
+  rating: 4.8,
+  review_count: 124,
+};
+
+export const sampleWallet = {
+  id: 'wallet-1',
+  doctor_id: 'doctor-123',
+  balance: 15450,
+  total_earned: 45000,
+  total_withdrawn: 29550,
+  transactions: [
+    { id: 'tx-1', type: 'credit', amount: 500, description: 'Consultation - Sarah Johnson', date: '2025-12-20' },
+    { id: 'tx-2', type: 'debit', amount: 2000, description: 'Withdrawal to Bank', date: '2025-12-18' },
+  ]
+};
+
+export const sampleBadges = ['top_rated', 'quick_responder', 'dedicated_healer'];
+
+export const sampleProducts = [
+  {
+    id: 'prod-1',
+    name: 'Immunity Booster Tea',
+    description: 'A blend of traditional herbs to strengthen your immune system.',
+    price: 250,
+    stock: 45,
+    image_url: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400&h=400&fit=crop',
+    category: 'Tea',
+    status: 'active'
+  },
+  {
+    id: 'prod-2',
+    name: 'Joint Relief Oil',
+    description: 'Herbal oil for relief from joint pain and inflammation.',
+    price: 350,
+    stock: 20,
+    image_url: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400&h=400&fit=crop',
+    category: 'Oil',
+    status: 'active'
+  }
+];
+
+export const sampleOrders = [
+  {
+    id: 'ord-1',
+    customer_name: 'Sarah Johnson',
+    date: '2025-12-21',
+    status: 'pending',
+    total: 500,
+    items: [
+      { product_name: 'Immunity Booster Tea', quantity: 2, price: 250 }
+    ]
+  },
+  {
+    id: 'ord-2',
+    customer_name: 'Michael Chen',
+    date: '2025-12-20',
+    status: 'delivered',
+    total: 350,
+    items: [
+      { product_name: 'Joint Relief Oil', quantity: 1, price: 350 }
+    ]
+  }
+];
+
+export const sampleNotifications = [
+  {
+    id: 'notif-1',
+    title: 'New Booking Request',
+    message: 'Sarah Johnson has requested a video consultation.',
+    type: 'booking',
+    read: false,
+    created_at: new Date(Date.now() - 3600000).toISOString()
+  },
+  {
+    id: 'notif-2',
+    title: 'Payment Received',
+    message: 'You received ₹500 for consultation #1234.',
+    type: 'payment',
+    read: true,
+    created_at: new Date(Date.now() - 86400000).toISOString()
+  }
+];

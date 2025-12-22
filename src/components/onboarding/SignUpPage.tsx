@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Leaf } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '../../contexts/AuthContext';
+import logo from '../../assets/logo.png';
 
 interface SignUpPageProps {
   onLoginClick: () => void;
@@ -64,7 +64,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
     <div className="min-h-screen bg-gradient-to-br from-[#E7F8EF] to-white flex">
       <div className="hidden lg:flex lg:w-1/2 bg-[#6CCF93] items-center justify-center p-12">
         <div className="text-center">
-          <Leaf className="w-32 h-32 text-white mx-auto mb-6" />
+          <img src={logo} alt="myherbalshop" className="w-32 h-32 mx-auto mb-6 object-contain" />
           <h2 className="text-4xl font-bold text-white mb-4">
             Join Our Community
           </h2>
@@ -78,13 +78,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4 lg:hidden">
-              <Leaf className="w-12 h-12 text-[#6CCF93]" />
+              <img src={logo} alt="myherbalshop" className="w-16 h-16 object-contain" />
             </div>
             <h1 className="text-3xl font-bold text-[#2E7D32] mb-2">
               Create your Healer account
             </h1>
             <p className="text-gray-600">
-              Join Herb Immortal and start your online practice.
+              Join myherbalshop and start your online practice.
             </p>
           </div>
 

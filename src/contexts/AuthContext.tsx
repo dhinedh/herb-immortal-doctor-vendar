@@ -1,6 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { sampleDoctor } from '../lib/sampleData';
+
+// Mock User type to replace Supabase User
+export interface User {
+  id: string;
+  email?: string;
+  phone?: string;
+  user_metadata?: {
+    full_name?: string;
+    avatar_url?: string;
+    [key: string]: any;
+  };
+  aud: string;
+  created_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -27,72 +40,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+    // Check for stored mock session
+    const storedUser = localStorage.getItem('mock_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    setLoading(true);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Mock successful login
+    const mockUser: User = {
+      id: sampleDoctor.id,
+      email: email,
+      phone: sampleDoctor.phone,
+      user_metadata: {
+        full_name: sampleDoctor.full_name,
+        avatar_url: sampleDoctor.avatar_url
+      },
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    };
+
+    setUser(mockUser);
+    localStorage.setItem('mock_user', JSON.stringify(mockUser));
+    setLoading(false);
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          phone,
-        },
-      },
-    });
-    if (error) throw error;
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (data.user) {
-      await supabase.from('doctors').insert({
-        id: data.user.id,
-        email,
-        phone,
+    const mockUser: User = {
+      id: 'new-doctor-' + Date.now(),
+      email: email,
+      phone: phone,
+      user_metadata: {
         full_name: fullName,
-        onboarding_completed: false,
-        onboarding_step: 0,
-      });
+      },
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    };
 
-      await supabase.from('wallet').insert({
-        doctor_id: data.user.id,
-        balance: 0,
-        total_earned: 0,
-        total_withdrawn: 0,
-      });
-    }
+    setUser(mockUser);
+    localStorage.setItem('mock_user', JSON.stringify(mockUser));
+    setLoading(false);
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setUser(null);
+    localStorage.removeItem('mock_user');
+    setLoading(false);
   };
 
   const sendOTP = async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) throw error;
+    console.log(`Mock OTP sent to ${email}`);
+    await new Promise(resolve => setTimeout(resolve, 500));
   };
 
   const verifyOTP = async (email: string, token: string) => {
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    });
-    if (error) throw error;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (token === '123456') { // Mock valid token
+      // Mock login via OTP
+      await signIn(email, 'password');
+    } else {
+      throw new Error('Invalid OTP');
+    }
   };
 
   const value = {
@@ -107,3 +126,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+

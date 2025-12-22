@@ -18,8 +18,8 @@ export const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
       <div className="prose prose-sm max-w-none">
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Introduction</h3>
         <p className="text-gray-700 mb-4">
-          Welcome to Herb Immortal. These terms and conditions outline the rules and regulations
-          for the use of Herb Immortal's platform.
+          Welcome to myherbalshop. These terms and conditions outline the rules and regulations
+          for the use of myherbalshop's platform.
         </p>
 
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Eligibility and Registration</h3>
@@ -36,7 +36,7 @@ export const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
 
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Payment and Fees</h3>
         <p className="text-gray-700 mb-4">
-          Herb Immortal charges a service fee for facilitating connections and transactions.
+          myherbalshop charges a service fee for facilitating connections and transactions.
           All fees will be clearly communicated before you accept bookings.
         </p>
 
@@ -54,13 +54,13 @@ export const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
 
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Limitation of Liability</h3>
         <p className="text-gray-700 mb-4">
-          Herb Immortal is not liable for any damages arising from your use of the platform
+          myherbalshop is not liable for any damages arising from your use of the platform
           or interactions with patients.
         </p>
 
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Contact</h3>
         <p className="text-gray-700">
-          For questions about these terms, please contact support@herbimmortal.com
+          For questions about these terms, please contact support@myherbalshop.com
         </p>
       </div>
 

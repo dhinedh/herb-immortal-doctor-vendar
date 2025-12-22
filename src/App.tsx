@@ -15,7 +15,6 @@ import { CalendarPage } from './components/dashboard/pages/CalendarPage';
 import { ProfilePage } from './components/dashboard/pages/ProfilePage';
 import { SettingsPage } from './components/dashboard/pages/SettingsPage';
 import { NotificationsPage } from './components/dashboard/pages/NotificationsPage';
-import { supabase } from './lib/supabase';
 
 type OnboardingStep =
   | 'splash'
@@ -38,18 +37,14 @@ function AppContent() {
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (user) {
-        const { data } = await supabase
-          .from('doctors')
-          .select('onboarding_completed')
-          .eq('id', user.id)
-          .maybeSingle();
+        // Simulate API check
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (data?.onboarding_completed) {
-          setOnboardingCompleted(true);
-          setOnboardingStep('dashboard');
-        } else {
-          setOnboardingStep('profile-setup');
-        }
+        // For mock purposes, assume if we have a user they are onboarded unless explicitly set otherwise
+        // In a real mock scenario we might check localStorage, but for now let's assume success
+        // to get to the dashboard.
+        setOnboardingCompleted(true);
+        setOnboardingStep('dashboard');
       }
     };
 

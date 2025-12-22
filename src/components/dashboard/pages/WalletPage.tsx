@@ -4,8 +4,8 @@ import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Input } from '../../ui/Input';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { sampleWallet } from '../../../lib/sampleData';
 
 interface WalletData {
   balance: number;
@@ -30,6 +30,36 @@ interface Transaction {
   created_at: string;
 }
 
+const mockTransactions: Transaction[] = [
+  {
+    id: 'tx_1',
+    type: 'credit',
+    amount: 1500,
+    description: 'Consultation Fee - Booking #BK789',
+    status: 'completed',
+    reference_type: 'booking',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'tx_2',
+    type: 'credit',
+    amount: 2500,
+    description: 'Product Sale - Order #ORD456',
+    status: 'completed',
+    reference_type: 'order',
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'tx_3',
+    type: 'debit',
+    amount: 5000,
+    description: 'Withdrawal to bank account',
+    status: 'completed',
+    reference_type: 'payout',
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  }
+];
+
 export const WalletPage: React.FC = () => {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<WalletData | null>(null);
@@ -48,31 +78,20 @@ export const WalletPage: React.FC = () => {
   const loadWalletData = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('wallet')
-      .select('*')
-      .eq('doctor_id', user.id)
-      .maybeSingle();
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 600));
 
-    if (data) {
-      setWallet(data);
-    }
+    setWallet(sampleWallet);
     setLoading(false);
   };
 
   const loadTransactions = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('doctor_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 600));
 
-    if (data) {
-      setTransactions(data);
-    }
+    setTransactions(mockTransactions);
   };
 
   const handleWithdraw = async () => {
@@ -83,27 +102,29 @@ export const WalletPage: React.FC = () => {
       return;
     }
 
-    await supabase.from('transactions').insert({
-      doctor_id: user.id,
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const newTransaction: Transaction = {
+      id: `tx_${Date.now()}`,
       type: 'debit',
       amount,
       description: 'Withdrawal to bank account',
       status: 'pending',
       reference_type: 'payout',
-    });
+      created_at: new Date().toISOString(),
+    };
 
-    await supabase
-      .from('wallet')
-      .update({
-        balance: wallet.balance - amount,
-        total_withdrawn: wallet.total_withdrawn + amount,
-      })
-      .eq('doctor_id', user.id);
+    setTransactions([newTransaction, ...transactions]);
+
+    setWallet({
+      ...wallet,
+      balance: wallet.balance - amount,
+      total_withdrawn: wallet.total_withdrawn + amount,
+    });
 
     setShowWithdrawModal(false);
     setWithdrawAmount('');
-    loadWalletData();
-    loadTransactions();
   };
 
   const getStatusVariant = (status: string) => {
@@ -206,9 +227,8 @@ export const WalletPage: React.FC = () => {
                   className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'credit' ? 'bg-green-50' : 'bg-red-50'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'credit' ? 'bg-green-50' : 'bg-red-50'
+                      }`}>
                       {transaction.type === 'credit' ? (
                         <TrendingUp className="w-5 h-5 text-green-600" />
                       ) : (
@@ -236,9 +256,8 @@ export const WalletPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold text-lg ${
-                      transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <p className={`font-semibold text-lg ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                      }`}>
                       {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount.toFixed(2)}
                     </p>
                     <Badge variant={getStatusVariant(transaction.status)} className="mt-1">

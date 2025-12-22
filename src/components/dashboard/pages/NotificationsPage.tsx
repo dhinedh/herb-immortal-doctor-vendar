@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Bell, Calendar, DollarSign, MessageSquare, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { sampleNotifications } from '../../../lib/sampleData';
 
 interface Notification {
   id: string;
@@ -21,52 +21,58 @@ export const NotificationsPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [loading, setLoading] = useState(true);
 
+  // Local state to simulate updates
+  const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    // Initialize local notifications from sample data
+    setLocalNotifications(sampleNotifications as unknown as Notification[]);
+  }, []);
+
   useEffect(() => {
     if (user) {
       loadNotifications();
     }
-  }, [user, filter]);
+  }, [user, filter, localNotifications]);
 
   const loadNotifications = async () => {
     if (!user) return;
 
     setLoading(true);
-    let query = supabase
-      .from('notifications')
-      .select('*')
-      .eq('doctor_id', user.id);
 
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    let filtered = [...localNotifications];
     if (filter === 'unread') {
-      query = query.eq('is_read', false);
+      filtered = filtered.filter(n => !n.is_read);
     }
 
-    const { data } = await query.order('created_at', { ascending: false });
+    // Sort by date desc
+    filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    if (data) {
-      setNotifications(data);
-    }
+    setNotifications(filtered);
     setLoading(false);
   };
 
   const markAsRead = async (id: string) => {
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', id);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    loadNotifications();
+    const updated = localNotifications.map(n =>
+      n.id === id ? { ...n, is_read: true } : n
+    );
+    setLocalNotifications(updated);
   };
 
   const markAllAsRead = async () => {
     if (!user) return;
 
-    await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('doctor_id', user.id)
-      .eq('is_read', false);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    loadNotifications();
+    const updated = localNotifications.map(n => ({ ...n, is_read: true }));
+    setLocalNotifications(updated);
   };
 
   const getIcon = (type: string) => {
@@ -150,9 +156,8 @@ export const NotificationsPage: React.FC = () => {
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 cursor-pointer ${
-                  !notification.is_read ? 'bg-[#E7F8EF]/30' : ''
-                }`}
+                className={`p-4 hover:bg-gray-50 cursor-pointer ${!notification.is_read ? 'bg-[#E7F8EF]/30' : ''
+                  }`}
                 onClick={() => !notification.is_read && markAsRead(notification.id)}
               >
                 <div className="flex items-start gap-3">

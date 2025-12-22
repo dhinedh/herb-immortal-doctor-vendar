@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface LicenseData {
@@ -70,32 +69,8 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
     setError(null);
 
     try {
-      const data = {
-        license_type: licenseType,
-        issuing_authority: issuingAuthority,
-        license_number: licenseNumber,
-        issue_date: issueDate,
-        expiry_date: expiryDate || null,
-      };
-
-      if (editingData?.id) {
-        const { error: updateError } = await supabase
-          .from('doctor_licenses')
-          .update(data)
-          .eq('id', editingData.id)
-          .eq('doctor_id', user.id);
-
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from('doctor_licenses')
-          .insert({
-            ...data,
-            doctor_id: user.id,
-          });
-
-        if (insertError) throw insertError;
-      }
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       onSuccess();
       onClose();

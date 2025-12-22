@@ -8,7 +8,7 @@ interface Chat {
   id: string;
   last_message: string;
   last_message_at: string;
-  unread_count_doctor: number;
+  unread_count_healer: number;
   patients: {
     full_name: string;
     avatar_url?: string;
@@ -35,7 +35,7 @@ export const ChatsPage: React.FC = () => {
     setMessages(sampleMessages[chat.id as keyof typeof sampleMessages] || []);
 
     const updatedChats = chats.map(c =>
-      c.id === chat.id ? { ...c, unread_count_doctor: 0 } : c
+      c.id === chat.id ? { ...c, unread_count_healer: 0 } : c
     );
     setChats(updatedChats);
   };
@@ -46,7 +46,7 @@ export const ChatsPage: React.FC = () => {
     const newMsg: Message = {
       id: `msg-${Date.now()}`,
       content: newMessage.trim(),
-      sender_type: 'doctor',
+      sender_type: 'healer',
       created_at: new Date().toISOString(),
     };
 
@@ -110,18 +110,17 @@ export const ChatsPage: React.FC = () => {
                 <div
                   key={chat.id}
                   onClick={() => handleSelectChat(chat)}
-                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                    selectedChat?.id === chat.id ? 'bg-[#E7F8EF]' : ''
-                  }`}
+                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${selectedChat?.id === chat.id ? 'bg-[#E7F8EF]' : ''
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <div className="w-12 h-12 rounded-full bg-[#6CCF93] flex items-center justify-center text-white font-semibold">
                         {chat.patients.full_name[0]}
                       </div>
-                      {chat.unread_count_doctor > 0 && (
+                      {chat.unread_count_healer > 0 && (
                         <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#E53935] rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                          {chat.unread_count_doctor}
+                          {chat.unread_count_healer}
                         </div>
                       )}
                     </div>
@@ -165,14 +164,13 @@ export const ChatsPage: React.FC = () => {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender_type === 'doctor' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.sender_type === 'healer' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-lg p-3 ${
-                        message.sender_type === 'doctor'
+                      className={`max-w-[70%] rounded-lg p-3 ${message.sender_type === 'healer'
                           ? 'bg-[#6CCF93] text-white'
                           : 'bg-gray-100 text-[#1F2933]'
-                      }`}
+                        }`}
                     >
                       <p className="text-sm">{message.content}</p>
                       {message.attachment_url && (

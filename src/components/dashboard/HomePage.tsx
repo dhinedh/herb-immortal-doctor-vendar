@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, TrendingUp, DollarSign, Award } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { BADGE_TYPES, BOOKING_STATUS } from '../../lib/constants';
+import { sampleBookings, sampleDoctor, sampleWallet, sampleBadges } from '../../lib/sampleData';
 
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
   const [doctorData, setDoctorData] = useState<{
-    fullName: string;
-    preferredName: string;
+    full_name: string;
+    preferred_name: string;
   } | null>(null);
-  const [upcomingBookings, setUpcomingBookings] = useState<unknown[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [stats, setStats] = useState({
     sessionsThisWeek: 0,
     newPatients: 0,
@@ -28,60 +28,39 @@ export const HomePage: React.FC = () => {
   }, [user]);
 
   const loadDashboardData = async () => {
-    if (!user) return;
+    // Simulate loading delay
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    const { data: doctor } = await supabase
-      .from('doctors')
-      .select('full_name, preferred_name')
-      .eq('id', user.id)
-      .maybeSingle();
+    // Mock Doctor Data
+    setDoctorData({
+      full_name: sampleDoctor.full_name,
+      preferred_name: sampleDoctor.preferred_name,
+    });
 
-    if (doctor) {
-      setDoctorData(doctor);
-    }
+    // Mock Upcoming Bookings
+    const today = new Date().toISOString().split('T')[0];
+    const futureBookings = sampleBookings
+      .filter(b => b.date >= today)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 5);
 
-    const { data: bookings } = await supabase
-      .from('bookings')
-      .select('*, patients(full_name, avatar_url)')
-      .eq('doctor_id', user.id)
-      .gte('date', new Date().toISOString().split('T')[0])
-      .order('date', { ascending: true })
-      .order('start_time', { ascending: true })
-      .limit(5);
+    setUpcomingBookings(futureBookings);
 
-    if (bookings) {
-      setUpcomingBookings(bookings);
-    }
+    // Mock Stats
+    setStats({
+      sessionsThisWeek: 15,
+      newPatients: 12,
+      averageRating: 4.8,
+    });
 
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
+    // Mock Earnings
+    setEarnings({
+      balance: sampleWallet.balance,
+      trend: 12, // Mock trend
+    });
 
-    const { count } = await supabase
-      .from('bookings')
-      .select('*', { count: 'exact', head: true })
-      .eq('doctor_id', user.id)
-      .gte('date', weekAgo.toISOString().split('T')[0]);
-
-    setStats((prev) => ({ ...prev, sessionsThisWeek: count || 0, newPatients: 12, averageRating: 4.8 }));
-
-    const { data: wallet } = await supabase
-      .from('wallet')
-      .select('balance, total_earned')
-      .eq('doctor_id', user.id)
-      .maybeSingle();
-
-    if (wallet) {
-      setEarnings({ balance: wallet.balance, trend: 12 });
-    }
-
-    const { data: badgeData } = await supabase
-      .from('doctor_badges')
-      .select('badge_type')
-      .eq('doctor_id', user.id);
-
-    if (badgeData) {
-      setBadges(badgeData.map((b) => b.badge_type));
-    }
+    // Mock Badges
+    setBadges(sampleBadges);
   };
 
   const getGreeting = () => {
@@ -97,7 +76,7 @@ export const HomePage: React.FC = () => {
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#2E7D32] mb-2">
-          {getGreeting()}, Dr. {displayName}
+          {getGreeting()}, Healer {displayName}
         </h1>
         <p className="text-gray-600">Here's a quick overview of your day.</p>
       </div>

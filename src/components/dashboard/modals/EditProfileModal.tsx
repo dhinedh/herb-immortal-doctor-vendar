@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 
 interface EditProfileModalProps {
@@ -52,19 +51,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
-        .from('doctors')
-        .update({
-          full_name: fullName,
-          preferred_name: preferredName || null,
-          phone: phone || null,
-          about: about || null,
-          work_best_with: workBestWith || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      if (updateError) throw updateError;
+      // In a real app we'd update Supabase here.
+      // For mock, we just assume success.
 
       onSuccess();
       onClose();

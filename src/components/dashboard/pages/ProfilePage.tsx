@@ -3,11 +3,11 @@ import { User, GraduationCap, Award, FileText, Edit2, Plus, Trash2 } from 'lucid
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
-import { supabase } from '../../../lib/supabase';
 import { EditProfileModal } from '../modals/EditProfileModal';
 import { EditEducationModal } from '../modals/EditEducationModal';
 import { EditLicenseModal } from '../modals/EditLicenseModal';
 import { EditCertificateModal } from '../modals/EditCertificateModal';
+import { sampleDoctor } from '../../../lib/sampleData';
 
 type TabType = 'overview' | 'education' | 'licenses' | 'certificates' | 'details';
 
@@ -47,13 +47,45 @@ interface Certificate {
   year: number;
 }
 
+const mockEducation: Education[] = [
+  {
+    id: 'edu-1',
+    degree: 'BAMS',
+    specialization: 'Ayurvedic Medicine',
+    institution: 'National Institute of Ayurveda',
+    country: 'India',
+    start_year: 2005,
+    end_year: 2010
+  }
+];
+
+const mockLicenses: License[] = [
+  {
+    id: 'lic-1',
+    license_type: 'Ayurvedic Practitioner License',
+    issuing_authority: 'Central Council of Indian Medicine',
+    license_number: 'AYU-12345',
+    issue_date: '2010-06-15',
+    expiry_date: '2030-06-15'
+  }
+];
+
+const mockCertificates: Certificate[] = [
+  {
+    id: 'cert-1',
+    title: 'Advanced Panchakarma Training',
+    issued_by: 'Ayurveda Academy',
+    year: 2015
+  }
+];
+
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [profile, setProfile] = useState<DoctorProfile | null>(null);
-  const [education, setEducation] = useState<Education[]>([]);
-  const [licenses, setLicenses] = useState<License[]>([]);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [education, setEducation] = useState<Education[]>(mockEducation);
+  const [licenses, setLicenses] = useState<License[]>(mockLicenses);
+  const [certificates, setCertificates] = useState<Certificate[]>(mockCertificates);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,33 +109,23 @@ export const ProfilePage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const [profileRes, educationRes, licensesRes, certificatesRes] = await Promise.all([
-        supabase.from('doctors').select('*').eq('id', user.id).maybeSingle(),
-        supabase.from('doctor_education').select('*').eq('doctor_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('doctor_licenses').select('*').eq('doctor_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('doctor_certificates').select('*').eq('doctor_id', user.id).order('created_at', { ascending: false }),
-      ]);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (profileRes.error) throw profileRes.error;
-      if (educationRes.error) throw educationRes.error;
-      if (licensesRes.error) throw licensesRes.error;
-      if (certificatesRes.error) throw certificatesRes.error;
+      setProfile({
+        full_name: sampleDoctor.full_name,
+        preferred_name: sampleDoctor.preferred_name,
+        email: sampleDoctor.email,
+        phone: sampleDoctor.phone,
+        about: sampleDoctor.about,
+        work_best_with: 'Patients with chronic conditions, digestive issues, and stress-related disorders.', // Mock data
+        profile_photo_url: sampleDoctor.avatar_url,
+      });
 
-      if (profileRes.data) {
-        setProfile({
-          full_name: profileRes.data.full_name,
-          preferred_name: profileRes.data.preferred_name,
-          email: profileRes.data.email,
-          phone: profileRes.data.phone,
-          about: profileRes.data.about,
-          work_best_with: profileRes.data.work_best_with,
-          profile_photo_url: profileRes.data.profile_photo_url,
-        });
-      }
+      // Education, Licenses, and Certificates are already set from mock constants in initial state
+      // In a real app, these would come from an API, but for now we just use the static mock data defined above
+      // or we could use state if we want to simulate updates (which we sort of are)
 
-      setEducation(educationRes.data || []);
-      setLicenses(licensesRes.data || []);
-      setCertificates(certificatesRes.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profile');
     } finally {
@@ -146,50 +168,20 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleDeleteEducation = async (id: string) => {
-    if (!user) return;
-    try {
-      const { error } = await supabase
-        .from('doctor_education')
-        .delete()
-        .eq('id', id)
-        .eq('doctor_id', user.id);
-
-      if (error) throw error;
-      fetchProfileData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete education');
+    if (confirm('Are you sure you want to delete this education record?')) {
+      setEducation(prev => prev.filter(e => e.id !== id));
     }
   };
 
   const handleDeleteLicense = async (id: string) => {
-    if (!user) return;
-    try {
-      const { error } = await supabase
-        .from('doctor_licenses')
-        .delete()
-        .eq('id', id)
-        .eq('doctor_id', user.id);
-
-      if (error) throw error;
-      fetchProfileData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete license');
+    if (confirm('Are you sure you want to delete this license?')) {
+      setLicenses(prev => prev.filter(l => l.id !== id));
     }
   };
 
   const handleDeleteCertificate = async (id: string) => {
-    if (!user) return;
-    try {
-      const { error } = await supabase
-        .from('doctor_certificates')
-        .delete()
-        .eq('id', id)
-        .eq('doctor_id', user.id);
-
-      if (error) throw error;
-      fetchProfileData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete certificate');
+    if (confirm('Are you sure you want to delete this certificate?')) {
+      setCertificates(prev => prev.filter(c => c.id !== id));
     }
   };
 
@@ -237,11 +229,10 @@ export const ProfilePage: React.FC = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === tab.key
-                      ? 'bg-[#E7F8EF] text-[#2E7D32]'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === tab.key
+                    ? 'bg-[#E7F8EF] text-[#2E7D32]'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{tab.label}</span>
@@ -270,7 +261,7 @@ export const ProfilePage: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-2xl font-bold text-[#1F2933] mb-1">
-                        Dr. {profile.preferred_name || profile.full_name}
+                        Healer {profile.preferred_name || profile.full_name}
                       </h3>
                       <p className="text-gray-600 mb-2">{profile.email}</p>
                       {profile.phone && <p className="text-gray-600">{profile.phone}</p>}
