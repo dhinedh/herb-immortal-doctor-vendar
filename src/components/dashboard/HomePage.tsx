@@ -184,6 +184,7 @@ export const HomePage: React.FC = () => {
             <div className="space-y-3">
               {badges.map((badgeType) => {
                 const badge = BADGE_TYPES[badgeType as keyof typeof BADGE_TYPES];
+                if (!badge) return null;
                 return (
                   <div
                     key={badgeType}

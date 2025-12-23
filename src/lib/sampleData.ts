@@ -255,7 +255,7 @@ export const sampleWallet = {
   ]
 };
 
-export const sampleBadges = ['top_rated', 'quick_responder', 'dedicated_healer'];
+export const sampleBadges = ['top_healer', 'excellent_rating', 'on_time_star'];
 
 export const sampleProducts = [
   {
