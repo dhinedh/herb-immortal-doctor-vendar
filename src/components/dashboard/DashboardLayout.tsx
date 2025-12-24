@@ -8,7 +8,6 @@ import {
   Bell,
   Menu,
   X,
-  Leaf,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -42,13 +41,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen overflow-hidden">
         <aside
-          className={`${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform lg:translate-x-0 lg:static`}
+          className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            } fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transition-transform lg:translate-x-0 lg:static`}
         >
           <div className="flex items-center gap-2 p-6 border-b border-gray-200">
-            <img src={logo} alt="myherbalshop" className="w-8 h-8 object-contain" />
-            <span className="text-xl font-bold text-[#2E7D32]">myherbalshop</span>
+            <img src={logo} alt="Myherbalshop" className="w-8 h-8 object-contain" />
+            <span className="text-xl font-bold text-[#2E7D32]">Myherbalshop</span>
           </div>
 
           <nav className="p-4 space-y-1">
@@ -59,11 +57,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   onPageChange?.(item.path);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  currentPage === item.path
-                    ? 'bg-[#E7F8EF] text-[#2E7D32]'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${currentPage === item.path
+                  ? 'bg-[#E7F8EF] text-[#2E7D32]'
+                  : 'text-gray-700 hover:bg-gray-100'
+                  }`}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
@@ -134,7 +131,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       </button>
                       <hr className="my-1" />
                       <button
-                        onClick={signOut}
+                        onClick={() => {
+                          console.log('Sign Out button clicked');
+                          signOut();
+                        }}
                         className="w-full px-4 py-2 text-left hover:bg-gray-100 text-red-600"
                       >
                         Sign Out

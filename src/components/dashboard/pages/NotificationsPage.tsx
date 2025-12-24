@@ -3,14 +3,17 @@ import { Bell, Calendar, DollarSign, MessageSquare, AlertCircle, CheckCircle } f
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
-import { sampleNotifications } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 
 interface Notification {
   id: string;
   type: 'booking' | 'payment' | 'system' | 'chat';
   title: string;
   description?: string;
-  is_read: boolean;
+  read: boolean; // Backend uses 'read', frontend interface used is_read? need to check model
+  // Model uses 'read'. SampleData used 'read'.
+  // Wait, sampleData used 'read', but interface in file used 'is_read'.
+  // I should align with backend model which is 'read'.
   action_url?: string;
   created_at: string;
 }
@@ -21,58 +24,42 @@ export const NotificationsPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [loading, setLoading] = useState(true);
 
-  // Local state to simulate updates
-  const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
-
   useEffect(() => {
-    // Initialize local notifications from sample data
-    setLocalNotifications(sampleNotifications as unknown as Notification[]);
+    loadNotifications();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      loadNotifications();
-    }
-  }, [user, filter, localNotifications]);
-
   const loadNotifications = async () => {
-    if (!user) return;
-
     setLoading(true);
-
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    let filtered = [...localNotifications];
-    if (filter === 'unread') {
-      filtered = filtered.filter(n => !n.is_read);
+    try {
+      const response = await api.get('/notifications');
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Failed to load notifications', error);
+    } finally {
+      setLoading(false);
     }
-
-    // Sort by date desc
-    filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    setNotifications(filtered);
-    setLoading(false);
   };
 
   const markAsRead = async (id: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const updated = localNotifications.map(n =>
-      n.id === id ? { ...n, is_read: true } : n
-    );
-    setLocalNotifications(updated);
+    try {
+      await api.put(`/notifications/${id}/read`);
+      const updated = notifications.map(n =>
+        n.id === id ? { ...n, read: true } : n
+      );
+      setNotifications(updated);
+    } catch (error) {
+      console.error('Failed to mark as read', error);
+    }
   };
 
   const markAllAsRead = async () => {
-    if (!user) return;
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const updated = localNotifications.map(n => ({ ...n, is_read: true }));
-    setLocalNotifications(updated);
+    try {
+      await api.put('/notifications/read-all');
+      const updated = notifications.map(n => ({ ...n, read: true }));
+      setNotifications(updated);
+    } catch (error) {
+      console.error('Failed to mark all as read', error);
+    }
   };
 
   const getIcon = (type: string) => {
@@ -108,8 +95,18 @@ export const NotificationsPage: React.FC = () => {
     }
   };
 
+  const filteredNotifications = notifications.filter(n => {
+    if (filter === 'unread') return !n.read;
+    return true;
+  });
+
+  // ... (getIcon and formatTime remain the same)
+
   return (
     <div className="max-w-4xl mx-auto">
+      {/* ... (header remains) */}
+
+      {/* ... (buttons remain, need to check markAllAsRead usage) */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#2E7D32] mb-2">Notifications</h1>
         <p className="text-gray-600">Stay updated with your latest activities</p>
@@ -144,7 +141,7 @@ export const NotificationsPage: React.FC = () => {
           <div className="text-center py-12">
             <div className="animate-pulse text-[#6CCF93] text-lg">Loading notifications...</div>
           </div>
-        ) : notifications.length === 0 ? (
+        ) : filteredNotifications.length === 0 ? (
           <div className="text-center py-12">
             <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-600">
@@ -153,18 +150,18 @@ export const NotificationsPage: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {notifications.map((notification) => (
+            {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 cursor-pointer ${!notification.is_read ? 'bg-[#E7F8EF]/30' : ''
+                className={`p-4 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-[#E7F8EF]/30' : ''
                   }`}
-                onClick={() => !notification.is_read && markAsRead(notification.id)}
+                onClick={() => !notification.read && markAsRead(notification.id)}
               >
                 <div className="flex items-start gap-3">
                   <div className="mt-1">{getIcon(notification.type)}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-1">
-                      <h3 className={`font-semibold text-[#1F2933] ${!notification.is_read ? 'text-[#2E7D32]' : ''}`}>
+                      <h3 className={`font-semibold text-[#1F2933] ${!notification.read ? 'text-[#2E7D32]' : ''}`}>
                         {notification.title}
                       </h3>
                       <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
@@ -174,7 +171,7 @@ export const NotificationsPage: React.FC = () => {
                     {notification.description && (
                       <p className="text-sm text-gray-600">{notification.description}</p>
                     )}
-                    {!notification.is_read && (
+                    {!notification.read && (
                       <div className="mt-2">
                         <span className="inline-block w-2 h-2 bg-[#6CCF93] rounded-full" />
                       </div>

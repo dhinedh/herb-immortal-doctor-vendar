@@ -3,6 +3,7 @@ import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { useAuth } from '../../../contexts/AuthContext';
+import api from '../../../lib/api';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -51,16 +52,23 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      setLoading(true);
 
-      // In a real app we'd update Supabase here.
-      // For mock, we just assume success.
+      const updates = {
+        full_name: fullName,
+        preferred_name: preferredName,
+        phone: phone,
+        about: about,
+        work_best_with: workBestWith
+      };
+
+      await api.put('/doctors/profile', updates);
 
       onSuccess();
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } catch (err: any) {
+      console.error('Update profile error:', err);
+      setError(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }

@@ -4,7 +4,7 @@ import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { useAuth } from '../../../contexts/AuthContext';
-import { sampleProducts } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 
 interface Product {
   id: string;
@@ -12,10 +12,17 @@ interface Product {
   category?: string;
   description?: string;
   price: number;
-  type: 'herbal' | 'digital' | 'service';
-  stock_quantity: number;
-  is_active: boolean;
-  created_at: string;
+  type: string; // Backend 'category' or 'type'? Backend has 'category' and 'type' unmapped. 
+  // Let's assume backend adds 'type' or we use 'category'.
+  // Sample data had 'category'='Tea'.
+  // Let's keep 'type' and assume backend returns it if we added it (we didn't explicitly add type to Schema, just copied fields).
+  // Wait, my ProductSchema in Core.js had 'category' and 'status'. Missing 'type'.
+  // I should accept whatever comes or add 'type' to backend.
+  // For now, allow optional.
+  stock: number; // Backend uses 'stock'
+  status: string; // Backend uses 'status'
+  image_url?: string;
+  created_at?: string;
 }
 
 export const ProductsPage: React.FC = () => {
@@ -25,41 +32,35 @@ export const ProductsPage: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const [loading, setLoading] = useState(true);
 
-  // Local state to simulate updates
-  const [localProducts, setLocalProducts] = useState<Product[]>([]);
-
   useEffect(() => {
-    // Initialize local products from sample data but ensure type compatibility
-    setLocalProducts(sampleProducts as unknown as Product[]);
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      loadProducts();
-    }
-  }, [user, localProducts]);
+    loadProducts();
+  }, [user]);
 
   const loadProducts = async () => {
     if (!user) return;
-
     setLoading(true);
-
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    setProducts(localProducts);
-    setLoading(false);
+    try {
+      const response = await api.get('/products');
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Failed to load products', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleProductStatus = async (id: string, currentStatus: boolean) => {
-    // Simulate API call
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 600));
+  const toggleProductStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      // Optimistic update
+      setProducts(products.map(p => p.id === id ? { ...p, status: newStatus } : p));
 
-    const updated = localProducts.map(p =>
-      p.id === id ? { ...p, is_active: !currentStatus } : p
-    );
-    setLocalProducts(updated);
+      await api.put(`/products/${id}`, { status: newStatus });
+    } catch (error) {
+      console.error('Failed to update product status', error);
+      // Revert on failure
+      loadProducts();
+    }
   };
 
   const filteredProducts = products.filter(product => {
@@ -147,16 +148,19 @@ export const ProductsPage: React.FC = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-lg text-[#1F2933]">{product.name}</h3>
-                    {!product.is_active && (
+                    {product.status !== 'active' && (
                       <Badge variant="error">Inactive</Badge>
                     )}
                   </div>
                   {product.category && (
                     <p className="text-sm text-gray-600 mb-2">{product.category}</p>
                   )}
-                  <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${getTypeColor(product.type)}`}>
-                    {product.type}
-                  </div>
+                  {/* Assuming backend provides type, or we might hide this badge if missing */}
+                  {product.type && (
+                    <div className={`inline-block px-2 py-1 rounded text-xs font-medium ${getTypeColor(product.type)}`}>
+                      {product.type}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -167,20 +171,19 @@ export const ProductsPage: React.FC = () => {
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
                 <div>
                   <p className="text-2xl font-bold text-[#2E7D32]">₹{product.price.toFixed(2)}</p>
-                  {product.type === 'herbal' && (
-                    <p className="text-xs text-gray-500">Stock: {product.stock_quantity}</p>
-                  )}
+                  {/* Check category or type for stock display */}
+                  <p className="text-xs text-gray-500">Stock: {product.stock}</p>
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <Button
-                  variant={product.is_active ? 'outline' : 'primary'}
+                  variant={product.status === 'active' ? 'outline' : 'primary'}
                   size="sm"
                   className="flex-1"
-                  onClick={() => toggleProductStatus(product.id, product.is_active)}
+                  onClick={() => toggleProductStatus(product.id, product.status)}
                 >
-                  {product.is_active ? 'Deactivate' : 'Activate'}
+                  {product.status === 'active' ? 'Deactivate' : 'Activate'}
                 </Button>
                 <Button variant="ghost" size="sm">
                   <Edit2 className="w-4 h-4" />

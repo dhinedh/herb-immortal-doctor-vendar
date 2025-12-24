@@ -3,6 +3,7 @@ import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { useAuth } from '../../../contexts/AuthContext';
+import api from '../../../lib/api';
 
 interface EducationData {
   id?: string;
@@ -19,6 +20,7 @@ interface EditEducationModalProps {
   onClose: () => void;
   onSuccess: () => void;
   editingData?: EducationData;
+  currentData?: EducationData[];
 }
 
 export const EditEducationModal: React.FC<EditEducationModalProps> = ({
@@ -26,6 +28,7 @@ export const EditEducationModal: React.FC<EditEducationModalProps> = ({
   onClose,
   onSuccess,
   editingData,
+  currentData,
 }) => {
   const { user } = useAuth();
   const [degree, setDegree] = useState('');
@@ -73,16 +76,34 @@ export const EditEducationModal: React.FC<EditEducationModalProps> = ({
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const newEducation = {
+        id: editingData?.id || Date.now().toString(),
+        degree,
+        specialization,
+        institution,
+        country,
+        start_year: startYear,
+        end_year: endYear || undefined
+      };
+
+      let updatedList = [...(currentData || [])];
+
+      if (editingData) {
+        updatedList = updatedList.map(item => item.id === editingData.id ? newEducation : item);
+      } else {
+        updatedList.push(newEducation);
+      }
+
+      await api.put('/doctors/profile', { education: updatedList });
 
       onSuccess();
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save education');
+    } catch (err: any) {
+      console.error('Save education error:', err);
+      setError(err.response?.data?.message || 'Failed to save education');
     } finally {
       setLoading(false);
-    } 
+    }
   };
 
   return (

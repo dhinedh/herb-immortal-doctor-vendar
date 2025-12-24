@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Clock, MapPin, Video, MessageSquare, Phone, FileText, Paperclip, ArrowLeft, User } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { BOOKING_STATUS, CONSULTATION_TYPES } from '../../../lib/constants';
-import { sampleBookings } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 
 interface BookingDetailsPageProps {
   bookingId: string;
@@ -48,20 +48,43 @@ export const BookingDetailsPage: React.FC<BookingDetailsPageProps> = ({ bookingI
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const foundBooking = sampleBookings.find(b => b.id === bookingId);
-    if (foundBooking) {
-      setBooking({
-        ...foundBooking,
-        patients: {
-          ...foundBooking.patients,
-          email: foundBooking.patients.full_name.toLowerCase().replace(' ', '.') + '@email.com',
-          phone: '+1 (555) 123-4567',
-        },
-      } as BookingDetails);
-      setNotes(foundBooking.notes || '');
-    }
+    const fetchBookingDetails = async () => {
+      try {
+        // In a real app, we would have a specific endpoint for details or reusing the list
+        // For now, let's assume we can fetch by ID from the bookings list endpoint or a specific one
+        // Since we don't have a specific GET /bookings/:id in our routes yet (we only did GET /), 
+        // we might need to update backend or just filter client side if we fetch all.
+        // BUT, ideally we should add GET /bookings/:id to backend. 
+        // Let's add it to backend quickly or just filter from all bookings if list is small.
+        // Given existing backend code: router.get('/', ...) returns all.
+        // Let's implement client-side filter from GET /bookings to matching ID for now to be safe without changing backend again immediately, 
+        // or better, I should allow the backend to serve it.
+        // Actually I can just fetch all and find it, similar to how sampleData worked, but async.
+
+        const response = await api.get('/bookings');
+        const foundBooking = response.data.find((b: any) => b.id === bookingId);
+
+        if (foundBooking) {
+          setBooking({
+            ...foundBooking,
+            // Ensure patients object has expected fields if missing from aggregation
+            patients: {
+              ...foundBooking.patients,
+              email: foundBooking.patients?.email || 'N/A', // fallback
+              phone: foundBooking.patients?.phone || 'N/A'
+            }
+          });
+          setNotes(foundBooking.notes || '');
+        }
+      } catch (error) {
+        console.error("Failed to fetch booking details", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookingDetails();
     setAttachments([]);
-    setLoading(false);
   }, [bookingId]);
 
   const handleSaveNotes = () => {

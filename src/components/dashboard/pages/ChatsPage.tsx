@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, Send, Paperclip, Image, MoreVertical } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { sampleChats, sampleMessages } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 
 interface Chat {
   id: string;
@@ -24,41 +24,64 @@ interface Message {
 }
 
 export const ChatsPage: React.FC = () => {
-  const [chats, setChats] = useState<Chat[]>(sampleChats);
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(sampleChats[0] || null);
-  const [messages, setMessages] = useState<Message[]>(sampleMessages[sampleChats[0]?.id as keyof typeof sampleMessages] || []);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSelectChat = (chat: Chat) => {
-    setSelectedChat(chat);
-    setMessages(sampleMessages[chat.id as keyof typeof sampleMessages] || []);
+  useEffect(() => {
+    fetchChats();
+  }, []);
 
+  const fetchChats = async () => {
+    try {
+      const response = await api.get('/chats');
+      setChats(response.data);
+    } catch (error) {
+      console.error('Failed to fetch chats', error);
+    }
+  };
+
+  const handleSelectChat = async (chat: Chat) => {
+    setSelectedChat(chat);
+    try {
+      const response = await api.get(`/chats/${chat.id}/messages`);
+      setMessages(response.data);
+    } catch (error) {
+      console.error('Failed to fetch messages', error);
+      setMessages([]);
+    }
+
+    // Locally update unread count for UI
     const updatedChats = chats.map(c =>
       c.id === chat.id ? { ...c, unread_count_healer: 0 } : c
     );
     setChats(updatedChats);
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!selectedChat || !newMessage.trim()) return;
 
-    const newMsg: Message = {
-      id: `msg-${Date.now()}`,
-      content: newMessage.trim(),
-      sender_type: 'healer',
-      created_at: new Date().toISOString(),
-    };
+    try {
+      const response = await api.post(`/chats/${selectedChat.id}/messages`, {
+        content: newMessage.trim(),
+        sender_type: 'healer' // In real app, derived from auth token
+      });
 
-    setMessages([...messages, newMsg]);
-    setNewMessage('');
+      const newMsg = response.data;
+      setMessages([...messages, newMsg]);
+      setNewMessage('');
 
-    const updatedChats = chats.map(c =>
-      c.id === selectedChat.id
-        ? { ...c, last_message: newMessage.trim(), last_message_at: new Date().toISOString() }
-        : c
-    );
-    setChats(updatedChats);
+      const updatedChats = chats.map(c =>
+        c.id === selectedChat.id
+          ? { ...c, last_message: newMsg.content, last_message_at: newMsg.created_at }
+          : c
+      );
+      setChats(updatedChats);
+    } catch (error) {
+      console.error('Failed to send message', error);
+    }
   };
 
   const filteredChats = chats.filter(chat =>
@@ -168,8 +191,8 @@ export const ChatsPage: React.FC = () => {
                   >
                     <div
                       className={`max-w-[70%] rounded-lg p-3 ${message.sender_type === 'healer'
-                          ? 'bg-[#6CCF93] text-white'
-                          : 'bg-gray-100 text-[#1F2933]'
+                        ? 'bg-[#6CCF93] text-white'
+                        : 'bg-gray-100 text-[#1F2933]'
                         }`}
                     >
                       <p className="text-sm">{message.content}</p>

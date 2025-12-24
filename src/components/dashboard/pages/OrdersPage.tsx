@@ -5,26 +5,23 @@ import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
 import { ORDER_STATUS } from '../../../lib/constants';
-import { sampleOrders } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 
 type FilterTab = 'all' | 'pending' | 'confirmed' | 'shipped' | 'delivered';
 
 interface Order {
   id: string;
-  quantity: number;
-  total_amount: number;
+  quantity?: number; // Backend might not have total quantity sum, but items
+  total: number; // Backend uses 'total'
   status: keyof typeof ORDER_STATUS;
   tracking_number?: string;
-  order_date: string;
-  patients: {
-    full_name: string;
-    email: string;
-    phone?: string;
-  };
-  products: {
-    name: string;
+  date: string; // Backend uses 'date'
+  customer_name: string;
+  items: {
+    product_name: string;
     price: number;
-  };
+    quantity: number;
+  }[];
 }
 
 export const OrdersPage: React.FC = () => {
@@ -33,55 +30,53 @@ export const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // We need local state for orders to simulate updates in this session
-  const [localOrders, setLocalOrders] = useState<Order[]>([]);
+  // We need local state for orders to simulate updates in this session? 
+  // No, let's use API directly for updates if possible or Mock update properly.
+  // For now, simple fetch.
 
   useEffect(() => {
-    // Initialize local orders from sample data
-    // In a real app, this would happen once or on refresh
-    setLocalOrders(sampleOrders as unknown as Order[]);
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      loadOrders();
-    }
-  }, [user, activeTab, localOrders]); // Re-run when tab changes or localOrders updates
+    loadOrders();
+  }, [user, activeTab]);
 
   const loadOrders = async () => {
-    if (!user) return;
+    if (!user) return; // Or load anyway?
 
     setLoading(true);
+    try {
+      const response = await api.get('/finance/orders');
+      let allOrders: Order[] = response.data;
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+      if (activeTab !== 'all') {
+        allOrders = allOrders.filter(o => o.status === activeTab);
+      }
 
-    let filtered = [...localOrders];
-
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(o => o.status === activeTab);
+      // Sort by date desc
+      allOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setOrders(allOrders);
+    } catch (error) {
+      console.error("Failed to load orders", error);
+    } finally {
+      setLoading(false);
     }
-
-    // Sort by date desc
-    filtered.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
-
-    setOrders(filtered);
-    setLoading(false);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    // Simulate API call
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      setLoading(true);
+      await api.put(`/finance/orders/${orderId}`, { status: newStatus });
 
-    const updated = localOrders.map(o =>
-      o.id === orderId
-        ? { ...o, status: newStatus as keyof typeof ORDER_STATUS }
-        : o
-    );
-    setLocalOrders(updated);
-    // loadOrders will be triggered by useEffect dependency on localOrders but we might want to manually modify 'orders' state to avoid flicker or wait
-    // Actually the useEffect dependency is fine.
+      // Update local state
+      const updated = orders.map(o =>
+        o.id === orderId
+          ? { ...o, status: newStatus as keyof typeof ORDER_STATUS }
+          : o
+      );
+      setOrders(updated);
+    } catch (error) {
+      console.error('Failed to update order status', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusVariant = (status: keyof typeof ORDER_STATUS) => {
@@ -121,8 +116,8 @@ export const OrdersPage: React.FC = () => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-6 py-3 font-medium transition-colors relative ${activeTab === tab.key
-                  ? 'text-[#2E7D32]'
-                  : 'text-gray-600 hover:text-[#2E7D32]'
+                ? 'text-[#2E7D32]'
+                : 'text-gray-600 hover:text-[#2E7D32]'
                 }`}
             >
               {tab.label}
@@ -157,7 +152,7 @@ export const OrdersPage: React.FC = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="font-semibold text-lg text-[#1F2933] mb-1">
-                        {order.products.name}
+                        {order.items[0]?.product_name} {order.items.length > 1 ? `+ ${order.items.length - 1} more` : ''}
                       </h3>
                       <p className="text-sm text-gray-600">
                         Order ID: {order.id.slice(0, 8)}
@@ -173,7 +168,7 @@ export const OrdersPage: React.FC = () => {
                       <User className="w-4 h-4 text-gray-400" />
                       <div>
                         <p className="text-gray-600">Customer</p>
-                        <p className="font-medium text-[#1F2933]">{order.patients.full_name}</p>
+                        <p className="font-medium text-[#1F2933]">{order.customer_name}</p>
                       </div>
                     </div>
 
@@ -182,7 +177,7 @@ export const OrdersPage: React.FC = () => {
                       <div>
                         <p className="text-gray-600">Order Date</p>
                         <p className="font-medium text-[#1F2933]">
-                          {new Date(order.order_date).toLocaleDateString()}
+                          {new Date(order.date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -190,8 +185,10 @@ export const OrdersPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Package className="w-4 h-4 text-gray-400" />
                       <div>
-                        <p className="text-gray-600">Quantity</p>
-                        <p className="font-medium text-[#1F2933]">{order.quantity}</p>
+                        <p className="text-gray-600">Items</p>
+                        <p className="font-medium text-[#1F2933]">
+                          {order.items.reduce((sum, item) => sum + item.quantity, 0)}
+                        </p>
                       </div>
                     </div>
 
@@ -199,7 +196,7 @@ export const OrdersPage: React.FC = () => {
                       <Truck className="w-4 h-4 text-gray-400" />
                       <div>
                         <p className="text-gray-600">Total Amount</p>
-                        <p className="font-medium text-[#2E7D32]">₹{order.total_amount.toFixed(2)}</p>
+                        <p className="font-medium text-[#2E7D32]">₹{order.total.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>

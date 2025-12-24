@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { User, Bell, Lock, Globe, Calendar, CreditCard } from 'lucide-react';
+import { User, Bell, Lock, Globe } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { useAuth } from '../../../contexts/AuthContext';
+import api from '../../../lib/api';
 
 type SettingsTab = 'account' | 'notifications' | 'privacy' | 'preferences';
 
@@ -16,7 +17,65 @@ export const SettingsPage: React.FC = () => {
     bookingAlerts: true,
     paymentAlerts: true,
     chatAlerts: true,
+    timezone: '(GMT+05:30) India Standard Time',
+    language: 'English',
+    dateFormat: 'DD/MM/YYYY'
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/doctors/profile');
+      if (response.data && response.data.settings) {
+        const s = response.data.settings;
+        setSettings({
+          emailNotifications: s.email_notifications ?? true,
+          smsNotifications: s.sms_notifications ?? false,
+          bookingAlerts: s.booking_alerts ?? true,
+          paymentAlerts: s.payment_alerts ?? true,
+          chatAlerts: s.chat_alerts ?? true,
+          timezone: s.timezone ?? '(GMT+05:30) India Standard Time',
+          language: s.language ?? 'English',
+          dateFormat: s.date_format ?? 'DD/MM/YYYY'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePreferences = async () => {
+    try {
+      setSaving(true);
+      const backendSettings = {
+        settings: {
+          email_notifications: settings.emailNotifications,
+          sms_notifications: settings.smsNotifications,
+          booking_alerts: settings.bookingAlerts,
+          payment_alerts: settings.paymentAlerts,
+          chat_alerts: settings.chatAlerts,
+          timezone: settings.timezone,
+          language: settings.language,
+          date_format: settings.dateFormat
+        }
+      };
+      await api.put('/doctors/profile', backendSettings);
+      // Optional: Show toast success
+    } catch (err) {
+      console.error('Failed to save settings', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   const tabs = [
     { key: 'account' as SettingsTab, label: 'Account', icon: User },
@@ -24,6 +83,10 @@ export const SettingsPage: React.FC = () => {
     { key: 'privacy' as SettingsTab, label: 'Privacy & Security', icon: Lock },
     { key: 'preferences' as SettingsTab, label: 'Preferences', icon: Globe },
   ];
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">Loading settings...</div>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -42,8 +105,8 @@ export const SettingsPage: React.FC = () => {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === tab.key
-                      ? 'bg-[#E7F8EF] text-[#2E7D32]'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-[#E7F8EF] text-[#2E7D32]'
+                    : 'text-gray-700 hover:bg-gray-100'
                     }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -64,7 +127,7 @@ export const SettingsPage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-[#1F2933] mb-4">Email & Phone</h3>
                   <div className="space-y-4">
                     <Input label="Email" type="email" value={user?.email || ''} disabled />
-                    <Input label="Phone" type="tel" placeholder="Enter phone number" />
+                    <Input label="Phone" type="tel" placeholder="Enter phone number" defaultValue={user?.phone} disabled />
                   </div>
                 </div>
 
@@ -141,7 +204,9 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 <div className="pt-6 border-t border-gray-200">
-                  <Button>Save Preferences</Button>
+                  <Button onClick={savePreferences} disabled={saving}>
+                    {saving ? 'Saving...' : 'Save Preferences'}
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -190,7 +255,11 @@ export const SettingsPage: React.FC = () => {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-[#1F2933] mb-2">Timezone</label>
-                  <select className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CCF93]">
+                  <select
+                    value={settings.timezone}
+                    onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CCF93]"
+                  >
                     <option>(GMT+05:30) India Standard Time</option>
                     <option>(GMT+00:00) UTC</option>
                     <option>(GMT-05:00) Eastern Time</option>
@@ -199,7 +268,11 @@ export const SettingsPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-[#1F2933] mb-2">Language</label>
-                  <select className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CCF93]">
+                  <select
+                    value={settings.language}
+                    onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CCF93]"
+                  >
                     <option>English</option>
                     <option>Hindi</option>
                     <option>Spanish</option>
@@ -208,7 +281,11 @@ export const SettingsPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-[#1F2933] mb-2">Date Format</label>
-                  <select className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CCF93]">
+                  <select
+                    value={settings.dateFormat}
+                    onChange={(e) => setSettings({ ...settings, dateFormat: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6CCF93]"
+                  >
                     <option>MM/DD/YYYY</option>
                     <option>DD/MM/YYYY</option>
                     <option>YYYY-MM-DD</option>
@@ -216,7 +293,9 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 <div className="pt-6 border-t border-gray-200">
-                  <Button>Save Preferences</Button>
+                  <Button onClick={savePreferences} disabled={saving}>
+                    {saving ? 'Saving...' : 'Save Preferences'}
+                  </Button>
                 </div>
               </div>
             </Card>

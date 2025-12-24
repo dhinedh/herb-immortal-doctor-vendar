@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { sampleDoctor } from '../lib/sampleData';
 
 // Mock User type to replace Supabase User
 export interface User {
@@ -35,68 +34,77 @@ export const useAuth = () => {
   return context;
 };
 
+import api from '../lib/api';
+
+// ... (imports remain)
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored mock session
+    // Check for stored user and token
     const storedUser = localStorage.getItem('mock_user');
-    if (storedUser) {
+    const token = localStorage.getItem('auth_token');
+
+    if (storedUser && token) {
       setUser(JSON.parse(storedUser));
+      // Optionally verify token with backend here
     }
     setLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { user, token } = response.data;
 
-    // Mock successful login
-    const mockUser: User = {
-      id: sampleDoctor.id,
-      email: email,
-      phone: sampleDoctor.phone,
-      user_metadata: {
-        full_name: sampleDoctor.full_name,
-        avatar_url: sampleDoctor.avatar_url
-      },
-      aud: 'authenticated',
-      created_at: new Date().toISOString()
-    };
-
-    setUser(mockUser);
-    localStorage.setItem('mock_user', JSON.stringify(mockUser));
-    setLoading(false);
+      setUser(user);
+      localStorage.setItem('mock_user', JSON.stringify(user));
+      localStorage.setItem('auth_token', token);
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const response = await api.post('/auth/signup', {
+        email,
+        password,
+        fullName,
+        phone
+      });
+      const { user, token } = response.data;
 
-    const mockUser: User = {
-      id: 'new-doctor-' + Date.now(),
-      email: email,
-      phone: phone,
-      user_metadata: {
-        full_name: fullName,
-      },
-      aud: 'authenticated',
-      created_at: new Date().toISOString()
-    };
-
-    setUser(mockUser);
-    localStorage.setItem('mock_user', JSON.stringify(mockUser));
-    setLoading(false);
+      setUser(user);
+      localStorage.setItem('mock_user', JSON.stringify(user));
+      localStorage.setItem('auth_token', token);
+    } catch (error) {
+      console.error('Signup failed:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signOut = async () => {
+    console.log('signOut called');
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setUser(null);
-    localStorage.removeItem('mock_user');
-    setLoading(false);
+    try {
+      // await api.post('/auth/logout'); // If backend has logout
+    } finally {
+      console.log('clearing user session');
+      setUser(null);
+      localStorage.removeItem('mock_user');
+      localStorage.removeItem('auth_token');
+      setLoading(false);
+    }
   };
 
   const sendOTP = async (email: string) => {

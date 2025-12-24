@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Calendar, Download, CreditCard } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Download, CreditCard } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Input } from '../../ui/Input';
 import { useAuth } from '../../../contexts/AuthContext';
-import { sampleWallet } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 
 interface WalletData {
   balance: number;
   total_earned: number;
   total_withdrawn: number;
+  transactions: Transaction[]; // Embedded in backend model
   bank_account_info?: {
     account_holder: string;
     account_number: string;
@@ -27,38 +28,9 @@ interface Transaction {
   description: string;
   status: 'completed' | 'pending' | 'failed';
   reference_type?: string;
-  created_at: string;
+  created_at?: string; // date in backend
+  date?: string; // date in sampleData
 }
-
-const mockTransactions: Transaction[] = [
-  {
-    id: 'tx_1',
-    type: 'credit',
-    amount: 1500,
-    description: 'Consultation Fee - Booking #BK789',
-    status: 'completed',
-    reference_type: 'booking',
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'tx_2',
-    type: 'credit',
-    amount: 2500,
-    description: 'Product Sale - Order #ORD456',
-    status: 'completed',
-    reference_type: 'order',
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'tx_3',
-    type: 'debit',
-    amount: 5000,
-    description: 'Withdrawal to bank account',
-    status: 'completed',
-    reference_type: 'payout',
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  }
-];
 
 export const WalletPage: React.FC = () => {
   const { user } = useAuth();
@@ -71,27 +43,23 @@ export const WalletPage: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadWalletData();
-      loadTransactions();
     }
   }, [user]);
 
   const loadWalletData = async () => {
     if (!user) return;
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    setWallet(sampleWallet);
-    setLoading(false);
-  };
-
-  const loadTransactions = async () => {
-    if (!user) return;
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    setTransactions(mockTransactions);
+    setLoading(true);
+    try {
+      const response = await api.get('/finance/wallet');
+      setWallet(response.data);
+      if (response.data && response.data.transactions) {
+        setTransactions(response.data.transactions);
+      }
+    } catch (error) {
+      console.error('Failed to load wallet', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleWithdraw = async () => {
@@ -239,7 +207,7 @@ export const WalletPage: React.FC = () => {
                       <p className="font-medium text-[#1F2933]">{transaction.description}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-xs text-gray-500">
-                          {new Date(transaction.created_at).toLocaleDateString('en-US', {
+                          {new Date(transaction.created_at || transaction.date || Date.now()).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',

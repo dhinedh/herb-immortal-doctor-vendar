@@ -16,12 +16,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       <div className="animate-fade-in">
         <div className="flex items-center justify-center mb-6">
           <div className="p-6 rounded-3xl animate-pulse">
-            <img src={logo} alt="myherbalshop" className="w-24 h-24 object-contain" />
+            <img src={logo} alt="Myherbalshop" className="w-24 h-24 object-contain" />
           </div>
+          <h1 className="text-3xl font-bold text-[#2E7D32]">
+            Myherbalshop
+          </h1>
         </div>
-        <h1 className="text-4xl font-bold text-[#2E7D32] text-center mb-3">
-          myherbalshop
-        </h1>
         <p className="text-lg text-gray-600 text-center">
           Holistic care. Modern convenience.
         </p>

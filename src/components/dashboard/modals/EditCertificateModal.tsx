@@ -3,6 +3,7 @@ import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { useAuth } from '../../../contexts/AuthContext';
+import api from '../../../lib/api';
 
 interface CertificateData {
   id?: string;
@@ -16,6 +17,7 @@ interface EditCertificateModalProps {
   onClose: () => void;
   onSuccess: () => void;
   editingData?: CertificateData;
+  currentData?: CertificateData[];
 }
 
 export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
@@ -23,6 +25,7 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
   onClose,
   onSuccess,
   editingData,
+  currentData
 }) => {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -61,13 +64,28 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const newCert = {
+        id: editingData?.id || Date.now().toString(),
+        title,
+        issued_by: issuedBy,
+        year
+      };
+
+      let updatedList = [...(currentData || [])];
+
+      if (editingData) {
+        updatedList = updatedList.map(item => item.id === editingData.id ? newCert : item);
+      } else {
+        updatedList.push(newCert);
+      }
+
+      await api.put('/doctors/profile', { certificates: updatedList });
 
       onSuccess();
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save certificate');
+    } catch (err: any) {
+      console.error('Save certificate error:', err);
+      setError(err.response?.data?.message || 'Failed to save certificate');
     } finally {
       setLoading(false);
     }

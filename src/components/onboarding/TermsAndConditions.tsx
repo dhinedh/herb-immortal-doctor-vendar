@@ -18,8 +18,8 @@ export const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
       <div className="prose prose-sm max-w-none">
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Introduction</h3>
         <p className="text-gray-700 mb-4">
-          Welcome to myherbalshop. These terms and conditions outline the rules and regulations
-          for the use of myherbalshop's platform.
+          Welcome to Myherbalshop. These terms and conditions outline the rules and regulations
+          for the use of Myherbalshop's platform.
         </p>
 
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Eligibility and Registration</h3>
@@ -36,7 +36,7 @@ export const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
 
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Payment and Fees</h3>
         <p className="text-gray-700 mb-4">
-          myherbalshop charges a service fee for facilitating connections and transactions.
+          Myherbalshop charges a service fee for facilitating connections and transactions.
           All fees will be clearly communicated before you accept bookings.
         </p>
 
@@ -54,7 +54,7 @@ export const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
 
         <h3 className="text-lg font-semibold text-[#2E7D32] mb-3">Limitation of Liability</h3>
         <p className="text-gray-700 mb-4">
-          myherbalshop is not liable for any damages arising from your use of the platform
+          Myherbalshop is not liable for any damages arising from your use of the platform
           or interactions with patients.
         </p>
 

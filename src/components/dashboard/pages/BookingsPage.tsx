@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Clock, MapPin, Video, MessageSquare, Phone, User } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { BOOKING_STATUS, CONSULTATION_TYPES } from '../../../lib/constants';
-import { sampleBookings } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 import { BookingDetailsPage } from './BookingDetailsPage';
 
 type FilterTab = 'all' | 'upcoming' | 'past';
@@ -29,8 +29,27 @@ interface Booking {
 
 export const BookingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
-  const [bookings] = useState<Booking[]>(sampleBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await api.get('/bookings');
+        setBookings(response.data);
+      } catch (error) {
+        console.error('Failed to fetch bookings', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
+
+  if (loading) {
+    return <div className="flex justify-center p-8">Loading bookings...</div>;
+  }
 
   const filteredBookings = bookings.filter((booking) => {
     const today = new Date().toISOString().split('T')[0];
@@ -120,11 +139,10 @@ export const BookingsPage: React.FC = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`px-6 py-3 font-medium transition-colors relative ${
-                activeTab === tab.key
-                  ? 'text-[#2E7D32]'
-                  : 'text-gray-600 hover:text-[#2E7D32]'
-              }`}
+              className={`px-6 py-3 font-medium transition-colors relative ${activeTab === tab.key
+                ? 'text-[#2E7D32]'
+                : 'text-gray-600 hover:text-[#2E7D32]'
+                }`}
             >
               {tab.label}
               {activeTab === tab.key && (
@@ -143,8 +161,8 @@ export const BookingsPage: React.FC = () => {
             {activeTab === 'upcoming'
               ? "You don't have any upcoming appointments"
               : activeTab === 'past'
-              ? "You don't have any past appointments"
-              : "You don't have any bookings yet"}
+                ? "You don't have any past appointments"
+                : "You don't have any bookings yet"}
           </p>
         </Card>
       ) : (

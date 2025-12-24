@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../../../lib/api';
 import { User, GraduationCap, Award, FileText, Edit2, Plus, Trash2 } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
@@ -7,7 +8,7 @@ import { EditProfileModal } from '../modals/EditProfileModal';
 import { EditEducationModal } from '../modals/EditEducationModal';
 import { EditLicenseModal } from '../modals/EditLicenseModal';
 import { EditCertificateModal } from '../modals/EditCertificateModal';
-import { sampleDoctor } from '../../../lib/sampleData';
+
 
 type TabType = 'overview' | 'education' | 'licenses' | 'certificates' | 'details';
 
@@ -109,24 +110,26 @@ export const ProfilePage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await api.get('/doctors/profile');
+      const data = response.data;
 
-      setProfile({
-        full_name: sampleDoctor.full_name,
-        preferred_name: sampleDoctor.preferred_name,
-        email: sampleDoctor.email,
-        phone: sampleDoctor.phone,
-        about: sampleDoctor.about,
-        work_best_with: 'Patients with chronic conditions, digestive issues, and stress-related disorders.', // Mock data
-        profile_photo_url: sampleDoctor.avatar_url,
-      });
+      if (data) {
+        setProfile({
+          full_name: data.full_name || user.user_metadata?.full_name || 'Doctor',
+          preferred_name: data.preferred_name || data.full_name?.split(' ')[0] || '',
+          email: data.email || user.email || '',
+          phone: data.phone || user.phone,
+          about: data.about || '',
+          work_best_with: data.work_best_with || '',
+          profile_photo_url: data.avatar_url || user.user_metadata?.avatar_url,
+        });
 
-      // Education, Licenses, and Certificates are already set from mock constants in initial state
-      // In a real app, these would come from an API, but for now we just use the static mock data defined above
-      // or we could use state if we want to simulate updates (which we sort of are)
-
+        setEducation(data.education || []);
+        setLicenses(data.licenses || []);
+        setCertificates(data.certificates || []);
+      }
     } catch (err) {
+      console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to load profile');
     } finally {
       setLoading(false);
@@ -447,6 +450,7 @@ export const ProfilePage: React.FC = () => {
         onClose={() => setEditEducationOpen(false)}
         onSuccess={fetchProfileData}
         editingData={editingEducation}
+        currentData={education}
       />
 
       <EditLicenseModal
@@ -454,6 +458,7 @@ export const ProfilePage: React.FC = () => {
         onClose={() => setEditLicenseOpen(false)}
         onSuccess={fetchProfileData}
         editingData={editingLicense}
+        currentData={licenses}
       />
 
       <EditCertificateModal
@@ -461,6 +466,7 @@ export const ProfilePage: React.FC = () => {
         onClose={() => setEditCertificateOpen(false)}
         onSuccess={fetchProfileData}
         editingData={editingCertificate}
+        currentData={certificates}
       />
     </div>
   );

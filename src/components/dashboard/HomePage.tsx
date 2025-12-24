@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, TrendingUp, DollarSign, Award } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
 import { BADGE_TYPES, BOOKING_STATUS } from '../../lib/constants';
-import { sampleBookings, sampleDoctor, sampleWallet, sampleBadges } from '../../lib/sampleData';
+import api from '../../lib/api';
 
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -20,6 +20,7 @@ export const HomePage: React.FC = () => {
   });
   const [earnings, setEarnings] = useState({ balance: 0, trend: 0 });
   const [badges, setBadges] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -28,39 +29,46 @@ export const HomePage: React.FC = () => {
   }, [user]);
 
   const loadDashboardData = async () => {
-    // Simulate loading delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    setLoading(true);
+    try {
+      // 1. Doctor Data from Auth
+      setDoctorData({
+        full_name: user?.user_metadata?.full_name || 'Doctor',
+        preferred_name: user?.user_metadata?.full_name?.split(' ')[0] || 'Doc',
+      });
 
-    // Mock Doctor Data
-    setDoctorData({
-      full_name: sampleDoctor.full_name,
-      preferred_name: sampleDoctor.preferred_name,
-    });
+      // 2. Fetch Bookings
+      const bookingsResponse = await api.get('/bookings');
+      const allBookings = bookingsResponse.data;
 
-    // Mock Upcoming Bookings
-    const today = new Date().toISOString().split('T')[0];
-    const futureBookings = sampleBookings
-      .filter(b => b.date >= today)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 5);
+      const today = new Date().toISOString().split('T')[0];
+      const futureBookings = allBookings
+        .filter((b: any) => b.date >= today)
+        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 5);
 
-    setUpcomingBookings(futureBookings);
+      setUpcomingBookings(futureBookings);
 
-    // Mock Stats
-    setStats({
-      sessionsThisWeek: 15,
-      newPatients: 12,
-      averageRating: 4.8,
-    });
+      // 3. Fetch Wallet/Earnings
+      const walletResponse = await api.get('/finance/wallet');
+      const wallet = walletResponse.data;
+      setEarnings({
+        balance: wallet?.balance || 0,
+        trend: 12, // Still mock or calculate if history available
+      });
 
-    // Mock Earnings
-    setEarnings({
-      balance: sampleWallet.balance,
-      trend: 12, // Mock trend
-    });
-
-    // Mock Badges
-    setBadges(sampleBadges);
+      // 4. Mock Stats / Badges (could be another API)
+      setStats({
+        sessionsThisWeek: 15,
+        newPatients: 12,
+        averageRating: 4.8,
+      });
+      setBadges(['top_healer', 'excellent_rating']);
+    } catch (error) {
+      console.error('Failed to load dashboard data', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getGreeting = () => {

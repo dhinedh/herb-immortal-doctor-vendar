@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { BOOKING_STATUS } from '../../../lib/constants';
-import { sampleBookings } from '../../../lib/sampleData';
+import api from '../../../lib/api';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -23,7 +23,22 @@ interface Booking {
 export const CalendarPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [bookings] = useState<Booking[]>(sampleBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await api.get('/bookings');
+        setBookings(response.data);
+      } catch (error) {
+        console.error('Failed to fetch bookings', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
 
   const getStartDate = () => {
     const date = new Date(currentDate);
@@ -153,11 +168,10 @@ export const CalendarPage: React.FC = () => {
                 <p className="text-xs text-gray-600">
                   {day.toLocaleDateString('en-US', { weekday: 'short' })}
                 </p>
-                <p className={`text-sm font-semibold ${
-                  day.toDateString() === new Date().toDateString()
+                <p className={`text-sm font-semibold ${day.toDateString() === new Date().toDateString()
                     ? 'text-[#6CCF93]'
                     : 'text-[#1F2933]'
-                }`}>
+                  }`}>
                   {day.getDate()}
                 </p>
               </div>
@@ -229,9 +243,8 @@ export const CalendarPage: React.FC = () => {
 
             return (
               <div key={day.toISOString()} className="bg-white p-2 min-h-[100px]">
-                <p className={`text-sm font-semibold mb-1 ${
-                  isToday ? 'text-[#6CCF93]' : 'text-gray-700'
-                }`}>
+                <p className={`text-sm font-semibold mb-1 ${isToday ? 'text-[#6CCF93]' : 'text-gray-700'
+                  }`}>
                   {day.getDate()}
                 </p>
                 <div className="space-y-1">

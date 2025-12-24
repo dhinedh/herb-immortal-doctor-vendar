@@ -3,6 +3,7 @@ import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { useAuth } from '../../../contexts/AuthContext';
+import api from '../../../lib/api';
 
 interface LicenseData {
   id?: string;
@@ -18,6 +19,7 @@ interface EditLicenseModalProps {
   onClose: () => void;
   onSuccess: () => void;
   editingData?: LicenseData;
+  currentData?: LicenseData[];
 }
 
 export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
@@ -25,6 +27,7 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
   onClose,
   onSuccess,
   editingData,
+  currentData,
 }) => {
   const { user } = useAuth();
   const [licenseType, setLicenseType] = useState('');
@@ -69,13 +72,30 @@ export const EditLicenseModal: React.FC<EditLicenseModalProps> = ({
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const newLicense = {
+        id: editingData?.id || Date.now().toString(),
+        license_type: licenseType,
+        issuing_authority: issuingAuthority,
+        license_number: licenseNumber,
+        issue_date: issueDate,
+        expiry_date: expiryDate || undefined
+      };
+
+      let updatedList = [...(currentData || [])];
+
+      if (editingData) {
+        updatedList = updatedList.map(item => item.id === editingData.id ? newLicense : item);
+      } else {
+        updatedList.push(newLicense);
+      }
+
+      await api.put('/doctors/profile', { licenses: updatedList });
 
       onSuccess();
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save license');
+    } catch (err: any) {
+      console.error('Save license error:', err);
+      setError(err.response?.data?.message || 'Failed to save license');
     } finally {
       setLoading(false);
     }
